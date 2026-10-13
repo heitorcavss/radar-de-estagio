@@ -114,7 +114,9 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - [ ] Opcional: trocar o exemplo da docstring de `buscar_vagas` por um tema menos "copiável".
 - [ ] Fase 2: ler a documentação das APIs de vagas (Adzuna, Remotive) e confirmar se cobrem estágio no Brasil.
 - [x] Fase 2: filtro (`filtro.py`) validado contra os dados falsos e ligado dentro de `buscar_vagas`.
-- [ ] Fase 2: testar o filtro no `adk web` (pedir "python", "cibersegurança", algo de fora de Goiânia).
+- [x] Fase 2: testar o filtro no `adk web` (14/10/2026, resultados na seção "Teste no `adk web` (fase 2)").
+- [ ] Opcional: orientar o modelo (docstring e `instruction`) a usar sinônimos do tema e não termos de áreas vizinhas
+  (ex.: "python" -> Python, Django, FastAPI; sem "backend"), e trocar o exemplo da docstring.
 - [ ] Fase 2: restringir o `try/except` só à chamada externa e capturar exceções específicas.
 - [ ] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar.
 - [ ] Ideia: `require_confirmation` do ADK (experimental) se algum dia houver uma tool que aja no mundo.
@@ -133,3 +135,24 @@ termos de cibersegurança (com e sem acento) → vaga 17.
   Isso era esperado: é o que a fase 2 resolve.
 - Erro 503 ("high demand") do modelo apareceu uma vez: problema temporário do lado do Google, não do código.
 - Faturamento: conta pré-paga com R$ 30 de saldo, recarga automática desativada, teto de R$ 20/mês no projeto.
+
+## Teste no `adk web` (fase 2, filtro ligado)
+
+Nenhuma vaga barrada pelo filtro apareceu em nenhum teste (5, 7, 8, 10, 11, 12, 14, 17 e 18 ficaram de fora).
+
+- **"vagas de python":** o modelo mandou `["Python","backend","Django",...]` e voltaram as vagas 1, 2, 3, 4 e 6.
+  A vaga 4 (Java) entra porque a área dela é `backend` e "backend" estava nos termos. Não é bug: o filtro de regras
+  está certo (Java é aceito) e a busca por termos casou com um termo que o modelo acrescentou.
+- **"cibersegurança":** primeira busca vazia; o agente fez a segunda busca mais ampla que a `instruction` pede
+  (redes, infraestrutura) e achou a vaga 15 (Cloud e DevOps). A vaga 17 não apareceu.
+- **"São Paulo":** a busca por termos não olha a cidade (só título, área, linguagens e requisitos), então o agente
+  trouxe vagas de backend/Python. Ele disse que não havia vaga em São Paulo "na base", o que é meio enganoso: a
+  vaga 8 existe, mas o filtro já a tinha removido.
+- **"front-end":** nenhuma vaga, depois de duas buscas. Vaga 18 barrada.
+- **"todas as vagas":** `buscar_vagas()` sem termos, 9 vagas (1, 2, 3, 4, 6, 9, 13, 15, 16), com a contagem dita antes.
+- **"vagas de dados":** vieram 6, 9, 13 e também a 16 (Help Desk), porque o modelo mandou "SQL" e a vaga 16 tem
+  "SQL básico" nos requisitos.
+
+**Aprendizado:** o modelo amplia o tema com sinônimos e termos de áreas vizinhas, e basta um termo casar para a vaga
+entrar. Isso é "busca larga" do funil; a análise com o currículo (fases 4 e 5) é quem vai ordenar e descartar o que
+não combina. Se incomodar antes disso: pedir na docstring e na `instruction` que use só sinônimos do próprio tema.

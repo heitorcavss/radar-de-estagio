@@ -58,9 +58,12 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 
 ## Status
 
-- **Fase 1: pronta** (aguardando só o commit final do `agent.py`). `buscar_vagas` com 18 vagas falsas, ligada ao agente
-  e testada no `adk web`. `.env` fora do Git. Repo no GitHub criado e ligado (`origin/main`).
-- **Próximo: Fase 2** (API real de vagas + filtro).
+- **Fase 1: concluída e publicada.** `buscar_vagas` com 18 vagas falsas, ligada ao agente e testada no `adk web`.
+  `.env` fora do Git. Repo no GitHub ligado (`origin/main`). Commits da fase:
+  `e890987` (estrutura), `5bf2c6c` (`buscar_vagas`), `0262341` (agente + testes no `adk web`).
+- **Fase 2: em andamento.** Começou o filtro em `radar_estagio/filtro.py` (ainda não commitado, ainda não ligado à
+  `buscar_vagas`). Falta: validar o filtro contra os comentários `# filtro:` dos dados falsos, ligá-lo dentro da
+  `buscar_vagas` e trocar os dados falsos por uma API real.
 
 ## `agent.py`: o que aprendi
 
@@ -86,12 +89,18 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 
 ## Pendências
 
-- [ ] Fase 1: commit e push final (`.gitignore` com `.adk/`, `NOTAS.md`, `agent.py`).
+- [x] Fase 1: commit e push final (`0262341`, `.gitignore` com `.adk/`, `NOTAS.md`, `agent.py`).
+- [ ] Commitar `radar_estagio/filtro.py` e a alteração pendente em `agent.py` quando o filtro estiver validado.
 - [ ] Conferir se, na pergunta "vaga de astronauta", o agente fez a segunda busca que a `instruction` pede.
 - [ ] Opcional: trocar o exemplo da docstring de `buscar_vagas` por um tema menos "copiável".
 - [ ] Fase 2: ler a documentação das APIs de vagas (Adzuna, Remotive) e confirmar se cobrem estágio no Brasil.
-- [ ] Fase 2: escrever o filtro como função separada, testada contra os comentários `# filtro:` dos dados falsos
-  (ele roda dentro de `buscar_vagas`, não é uma tool). Definir quais áreas contam como "dev" para a regra de linguagem.
+- [ ] Fase 2: validar o filtro (`filtro.py`) contra os comentários `# filtro:` dos dados falsos e ligá-lo dentro de
+  `buscar_vagas` (ele roda por dentro, não é uma tool). Áreas "dev" definidas no código: backend, fullstack,
+  embarcados, ia. Teste rodado contra os dados falsos: 16 de 18 batem. As vagas 11 (mobile, Dart) e 18 (frontend,
+  JavaScript) passam no filtro atual, mas **foi decisão minha deixar mobile e frontend de fora** (não são meu interesse).
+  Quando voltar ao filtro: o jeito honesto de barrá-las é pôr `mobile` e `frontend` em `AREAS_EXCLUIDAS`
+  (não é "dev sem linguagem aceita", é "área que não quero"); aí o gabarito `# filtro:` continua barrando as duas.
+  Filtro pausado por enquanto.
 - [ ] Fase 2: restringir o `try/except` só à chamada externa e capturar exceções específicas.
 - [ ] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar.
 - [ ] Ideia: `require_confirmation` do ADK (experimental) se algum dia houver uma tool que aja no mundo.

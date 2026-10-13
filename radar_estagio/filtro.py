@@ -16,7 +16,7 @@ def passa_no_filtro(vaga: dict) -> bool:
 
     if vaga["area"] in AREAS_DEV:
         linguagens = {l.lower() for l in vaga["linguagens"]}
-        if not linguagens & LINGUAGENS_ACEITAS:
+        if not linguagens & LINGUAGENS_ACEITAS: # não (linguagens & LINGUAGENS_ACEITAS), se vazio, entra no if. & = interseção
             return False
 
     return True

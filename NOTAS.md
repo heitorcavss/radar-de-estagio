@@ -61,9 +61,29 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - **Fase 1: concluída e publicada.** `buscar_vagas` com 18 vagas falsas, ligada ao agente e testada no `adk web`.
   `.env` fora do Git. Repo no GitHub ligado (`origin/main`). Commits da fase:
   `e890987` (estrutura), `5bf2c6c` (`buscar_vagas`), `0262341` (agente + testes no `adk web`).
-- **Fase 2: em andamento.** Começou o filtro em `radar_estagio/filtro.py` (ainda não commitado, ainda não ligado à
-  `buscar_vagas`). Falta: validar o filtro contra os comentários `# filtro:` dos dados falsos, ligá-lo dentro da
-  `buscar_vagas` e trocar os dados falsos por uma API real.
+- **Fase 2: em andamento.** Filtro de regras pronto (`radar_estagio/filtro.py`), testado contra os comentários
+  `# filtro:` dos dados falsos (9 passam, 9 barradas) e ligado dentro de `buscar_vagas`. Falta: testar no `adk web`
+  e trocar os dados falsos por uma API real.
+
+## Filtro de regras (fase 2)
+
+- **Dois filtros em sequência, dentro de `buscar_vagas`:** primeiro `filtrar_vagas` (minhas regras fixas, não depende
+  do pedido), depois a busca por termos (o tema do pedido atual). Os dois só removem vagas, então a ordem não muda o
+  resultado; filtrar antes só evita comparar termos com vagas que seriam descartadas.
+- **Regras:** área excluída (`suporte_hardware`, `ciberseguranca`, `frontend`, `mobile`); híbrido/presencial só em
+  Goiânia (remoto vale de qualquer cidade); áreas de programação (`AREAS_DEV`: backend, fullstack, embarcados, ia)
+  exigem Java, Python ou C. Áreas como dados, cloud e suporte de software não exigem linguagem.
+- **Frontend e mobile ficam de fora por falta de interesse.** Tirar a área de `AREAS_DEV` NÃO barra a vaga: só deixa
+  de checar a linguagem, e a vaga passa direto. Para barrar, a área vai em `AREAS_EXCLUIDAS`.
+- **`if not linguagens & LINGUAGENS_ACEITAS`:** `&` entre conjuntos é a interseção (o que os dois têm em comum);
+  o `&` é calculado antes do `not`, então é `not (linguagens & LINGUAGENS_ACEITAS)`: entra no `if` quando a
+  interseção está vazia, ou seja, a vaga não tem nenhuma linguagem aceita. `and` seria outra coisa (junta duas
+  condições, não compara os conjuntos).
+- **Teste:** `python -m radar_estagio.filtro` imprime `ok` se os ids que passam são {1, 2, 3, 4, 6, 9, 13, 15, 16}.
+  `tools.py` agora usa import relativo, então rodar `python radar_estagio/tools.py` direto não funciona mais;
+  usar `python -m radar_estagio.tools`.
+- **Limitação:** o filtro é fixo. Se o usuário pedir uma cidade fora de Goiânia, o agente não acha nada, porque essas
+  vagas já foram removidas antes da busca. Aceitável para um único usuário com regras fixas.
 
 ## `agent.py`: o que aprendi
 
@@ -90,17 +110,11 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 ## Pendências
 
 - [x] Fase 1: commit e push final (`0262341`, `.gitignore` com `.adk/`, `NOTAS.md`, `agent.py`).
-- [ ] Commitar `radar_estagio/filtro.py` e a alteração pendente em `agent.py` quando o filtro estiver validado.
 - [ ] Conferir se, na pergunta "vaga de astronauta", o agente fez a segunda busca que a `instruction` pede.
 - [ ] Opcional: trocar o exemplo da docstring de `buscar_vagas` por um tema menos "copiável".
 - [ ] Fase 2: ler a documentação das APIs de vagas (Adzuna, Remotive) e confirmar se cobrem estágio no Brasil.
-- [ ] Fase 2: validar o filtro (`filtro.py`) contra os comentários `# filtro:` dos dados falsos e ligá-lo dentro de
-  `buscar_vagas` (ele roda por dentro, não é uma tool). Áreas "dev" definidas no código: backend, fullstack,
-  embarcados, ia. Teste rodado contra os dados falsos: 16 de 18 batem. As vagas 11 (mobile, Dart) e 18 (frontend,
-  JavaScript) passam no filtro atual, mas **foi decisão minha deixar mobile e frontend de fora** (não são meu interesse).
-  Quando voltar ao filtro: o jeito honesto de barrá-las é pôr `mobile` e `frontend` em `AREAS_EXCLUIDAS`
-  (não é "dev sem linguagem aceita", é "área que não quero"); aí o gabarito `# filtro:` continua barrando as duas.
-  Filtro pausado por enquanto.
+- [x] Fase 2: filtro (`filtro.py`) validado contra os dados falsos e ligado dentro de `buscar_vagas`.
+- [ ] Fase 2: testar o filtro no `adk web` (pedir "python", "cibersegurança", algo de fora de Goiânia).
 - [ ] Fase 2: restringir o `try/except` só à chamada externa e capturar exceções específicas.
 - [ ] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar.
 - [ ] Ideia: `require_confirmation` do ADK (experimental) se algum dia houver uma tool que aja no mundo.

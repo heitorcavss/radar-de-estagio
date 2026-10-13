@@ -1,3 +1,5 @@
+from .filtro import filtrar_vagas
+
 
 VAGAS_FALSAS = [
     {"id": 1, "titulo": "Estágio em Desenvolvimento Backend Python", "empresa": "Empresa Exemplo A",
@@ -94,6 +96,7 @@ VAGAS_FALSAS = [
 def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
     """
     Lista vagas de estágio de TI da base de vagas disponível, por tema.
+    Já devolve só vagas que passam nas regras eliminatórias (local, área e linguagem).
     
     Use quando o usuário pedir vagas, estágios ou oportunidades, com ou sem
     um tema. Não use para perguntas gerais (por exemplo, "o que é um agente
@@ -119,19 +122,21 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
         - "error_message": só aparece se "status" for "error".
     """
     encontradas = []
+    # o filtro roda antes da busca: só vagas que passam nas regras entram
+    vagas_validas = filtrar_vagas(VAGAS_FALSAS)
     
     # Implementação da função de busca de vagas
     try:
         #protetor: se não houver termos de busca, devolve todas as vagas
         if not termos_de_busca:
-            return {"numero_vagas": len(VAGAS_FALSAS), "vagas": VAGAS_FALSAS, "status": "success"}
+            return {"numero_vagas": len(vagas_validas), "vagas": vagas_validas, "status": "success"}
         #protetor: se termos_de_busca não for uma lista, lança ValueError
         if not isinstance(termos_de_busca, list):
             raise ValueError("termos_de_busca deve ser uma lista de strings.")
         
         #preparação de termos: tudo minusculo e separar palavras como 'machine learning' em ['machine', 'learning']
         termos_em_palavras = [termo.lower().split() for termo in termos_de_busca]
-        for vaga in VAGAS_FALSAS: # pega 1 vaga por vez
+        for vaga in vagas_validas: # pega 1 vaga por vez
             
             # para cada vaga, cria se uma lista de palavras com .split() e .lower() para comparar com os termos de busca.
             # usa-se " ".join() para juntar as listas de linguagens e requisitos em uma única string, que depois é dividida em palavras.

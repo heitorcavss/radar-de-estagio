@@ -56,13 +56,57 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - "back-end" não casa com "backend".
 - O `except Exception` largo esconde bugs (ver seção de try/except). Revisar na fase 2.
 
+## Status
+
+- **Fase 1: pronta** (aguardando só o commit final do `agent.py`). `buscar_vagas` com 18 vagas falsas, ligada ao agente
+  e testada no `adk web`. `.env` fora do Git. Repo no GitHub criado e ligado (`origin/main`).
+- **Próximo: Fase 2** (API real de vagas + filtro).
+
+## `agent.py`: o que aprendi
+
+- **`description` x `instruction`** (doc do ADK): `description` é lida por *outros agentes* para decidir se encaminham
+  uma tarefa (importa na fase 9); `instruction` é lida pelo *próprio agente* e define o comportamento.
+- **Import:** dentro do pacote usa-se import relativo (`from .tools import buscar_vagas`).
+  `from tools import ...` dá `ModuleNotFoundError`, porque o `adk web` carrega `radar_estagio` como pacote.
+- **`tools=[buscar_vagas]`** recebe a função sem parênteses (referência, não chamada).
+- **A `instruction` não pode contradizer o projeto.** A primeira versão mandava o agente interrogar o usuário antes de
+  buscar e só usar a tool com "habilidades e experiências". Isso quebraria o teste do briefing, e quem conhece o perfil é
+  o currículo (fases 4 e 5), não uma conversa. Faltava também a regra "nunca envia candidatura".
+- A versão final diz: busca direto, usa interesses (backend, IA, dados) quando não há tema, nunca inventa vagas,
+  não avalia compatibilidade ainda, tenta uma nova busca se vier vazio.
+
+## Faturamento da API Gemini (decisões de segurança)
+
+- Conta pré-paga: gasto sai do saldo (R$ 30). Sem saldo, as chamadas falham (erro 402); não continua cobrando.
+- Recarga automática desativada. Teto de R$ 20/mês no projeto "Estagio agent" (experimental, pode passar um pouco
+  por causa de ~10 min de latência na cobrança).
+- Créditos não são reembolsáveis e expiram em 12 meses. Fechar a conta de faturamento perde o saldo.
+- Não ativar outros serviços do Google Cloud nessa conta de faturamento (cobrariam no cartão por fora do saldo).
+- Chave só no `.env` (ignorado). Se vazar, revogar e criar outra.
+
 ## Pendências
 
-- [ ] Assinatura: conferir `list[str] | None = None` (a docstring diz "Se omitido, devolve todas").
-- [ ] Tirar (ou proteger com `if __name__ == "__main__":`) o código solto no fim do `tools.py`. (Já protegido com `__main__`; conferir.)
-- [ ] Escrever o `agent.py` (nome, modelo, description, instruction, `tools=[buscar_vagas]`) e testar no `adk web`.
-- [ ] Ideia para o `agent.py`: interesses gerais (backend, IA, dados) na `instruction`, para quando o usuário não disser o tema.
-- [ ] Criar o repositório no GitHub e conectar o repo local (`git remote add` + `git push`).
-- [ ] Fase 2: escrever o filtro como função separada, testada contra os comentários `# filtro:` dos dados falsos.
+- [ ] Fase 1: commit e push final (`.gitignore` com `.adk/`, `NOTAS.md`, `agent.py`).
+- [ ] Conferir se, na pergunta "vaga de astronauta", o agente fez a segunda busca que a `instruction` pede.
+- [ ] Opcional: trocar o exemplo da docstring de `buscar_vagas` por um tema menos "copiável".
+- [ ] Fase 2: ler a documentação das APIs de vagas (Adzuna, Remotive) e confirmar se cobrem estágio no Brasil.
+- [ ] Fase 2: escrever o filtro como função separada, testada contra os comentários `# filtro:` dos dados falsos
+  (ele roda dentro de `buscar_vagas`, não é uma tool). Definir quais áreas contam como "dev" para a regra de linguagem.
+- [ ] Fase 2: restringir o `try/except` só à chamada externa e capturar exceções específicas.
 - [ ] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar.
 - [ ] Ideia: `require_confirmation` do ADK (experimental) se algum dia houver uma tool que aja no mundo.
+- [ ] Ideia: normalizar acentos na busca, para não depender de o modelo mandar as duas grafias.
+
+## Teste no `adk web` (fase 1, 13/10/2026)
+
+- Pergunta sobre vagas de backend: o agente chamou `buscar_vagas(["backend","Python","Java","API"])` e listou as vagas
+  com empresa, cidade, modalidade, tecnologias e link, sem inventar nada.
+- Pergunta fora do assunto ("o que é um agente de IA?"): respondeu normalmente.
+- Pergunta sem resultado ("vaga de astronauta"): disse que nenhuma vaga combina com o termo e sugeriu temas.
+- **Aprendizado:** os termos que o modelo mandou são idênticos ao exemplo da docstring
+  (`"backend" -> ["backend", "Python", "Java", "API"]`). Exemplos em docstring ancoram os argumentos do modelo.
+  Se isso incomodar, trocar o exemplo por um tema diferente dos que o usuário costuma pedir.
+- Apareceram vagas que o filtro da fase 2 vai barrar (.NET em Curitiba, presencial em São Paulo, cibersegurança).
+  Isso era esperado: é o que a fase 2 resolve.
+- Erro 503 ("high demand") do modelo apareceu uma vez: problema temporário do lado do Google, não do código.
+- Faturamento: conta pré-paga com R$ 30 de saldo, recarga automática desativada, teto de R$ 20/mês no projeto.

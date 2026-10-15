@@ -27,7 +27,7 @@ def filtrar_vagas(vagas: list[dict]) -> list[dict]:
 
 
 if __name__ == "__main__":
-    from .tools import VAGAS_FALSAS
+    from .dados_falsos import VAGAS_FALSAS
 
     esperado = {1, 2, 3, 4, 6, 9, 13, 15, 16}  # vagas sem "BARRADA" nos comentários de tools.py
     obtido = {v["id"] for v in filtrar_vagas(VAGAS_FALSAS)}

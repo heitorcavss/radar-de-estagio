@@ -16,6 +16,11 @@ def passa_no_filtro(vaga: dict) -> bool:
 
     # Cidade conhecida e fora da base: só passa se for remota.
     # Cidade desconhecida: mantém.
+    # Sem nenhum sinal de TI no título nem na descrição: barra (Farmácia, Contábil...).
+    # .get porque os dados falsos antigos não têm o campo "ti"; sem o campo, mantém.
+    if vaga.get("ti") is False:
+        return False
+
     cidade = vaga["cidade"]
     if cidade is not None and cidade not in CIDADES_BASE and vaga["modalidade"] != "remoto":
         return False
@@ -57,6 +62,8 @@ if __name__ == "__main__":
         ("só C# barra", {"linguagens": ["C#"]}, False),
         ("C# e Java mantém", {"linguagens": ["C#", "Java"]}, True),
         ("mobile barra", {"area": "mobile"}, False),
+        ("sem sinal de TI barra", {"ti": False}, False),
+        ("com sinal de TI mantém", {"ti": True}, True),
         ("dados só com Scala mantém", {"area": "dados", "linguagens": ["Scala"]}, True),
     ]
     for nome, mudancas, esperado_caso in casos:

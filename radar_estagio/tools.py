@@ -60,6 +60,17 @@ AREAS_POR_PALAVRA = {
 }
 
 
+# Termos que indicam vaga de TI. No título bastam termos curtos; na descrição só termos
+TERMOS_TI_TITULO = ["ti", "tecnologia", "software", "dados", "desenvolvedor", "desenvolvimento",
+                    "programacao", "sistemas", "computacao", "informatica", "dev", "devops",
+                    "cloud", "backend", "back-end", "ia", "inteligencia artificial", "bi", "data",
+                    "analytics", "infraestrutura", "redes", "suporte tecnico", "banco de dados"]
+TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "sql", "tecnologia da informacao",
+                       "desenvolvimento de software", "ciencia da computacao", "engenharia de software",
+                       "engenharia da computacao", "analise de sistemas", "banco de dados",
+                       "ciencia de dados", "engenharia de dados", "machine learning"]
+
+
 def _sem_acento(texto: str) -> str:
     """Minúsculas e sem acento, para 'híbrido' e 'hibrido' serem a mesma coisa."""
     return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
@@ -78,6 +89,15 @@ def _detectar_modalidade(texto: str) -> str | None:
     if "presencial" in texto:
         return "presencial"
     return None  # desconhecida: o filtro mantém a vaga
+
+
+def _detectar_ti(titulo: str, descricao: str) -> bool:
+    """True se o título tem um termo de TI ou a descrição tem um termo específico de TI.
+    Muitos estágios de TI não dizem isso no título, por isso a descrição também conta."""
+    titulo = _sem_acento(titulo)
+    descricao = _sem_acento(descricao)
+    return (any(_tem_palavra(p, titulo) for p in TERMOS_TI_TITULO)
+            or any(_tem_palavra(p, descricao) for p in TERMOS_TI_DESCRICAO))
 
 
 def _detectar_area(titulo: str) -> str | None:
@@ -111,6 +131,7 @@ def _converter_vaga(vaga: dict) -> dict:
         "cidade": None if cidade in ("", "Brasil") else cidade,
         "modalidade": _detectar_modalidade(_sem_acento(titulo + " " + descricao)),
         "area": _detectar_area(titulo),
+        "ti": _detectar_ti(titulo, descricao),
         "linguagens": _detectar_linguagens(titulo + " " + descricao),
         "descricao": descricao,
         "url": vaga.get("redirect_url"),

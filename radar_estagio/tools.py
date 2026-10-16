@@ -137,6 +137,11 @@ def _converter_vaga(vaga: dict) -> dict:
     }
 
 
+# Termos usados quando o usuário não dá tema. Específicos de TI e ligados aos interesses
+# (backend, IA, dados): termos curtos como "ti" trazem ruído. O filtro barra o que sobrar de fora.
+TERMOS_BUSCA_PADRAO = ["python", "java", "backend", "desenvolvedor", "dados",
+                       "inteligência artificial", "programação"]
+
 BUSCA_GOIANIA = {"where": "Goiânia", "distance": 30}  # 30 km cobre Goiânia e Aparecida de Goiânia
 
 
@@ -178,9 +183,10 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
         return {"numero_vagas": 0, "vagas": [], "status": "error",
                 "error_message": "termos_de_busca deve ser uma lista de strings."}
 
-    base = {"what": "estágio", "results_per_page": 50}
-    if termos_de_busca:
-        base["what_or"] = " ".join(termos_de_busca)  # o Adzuna separa por espaço e aceita qualquer um
+    # sem tema, usa os termos padrão: sem what_or o Adzuna traz 50 estágios de todas as áreas
+    termos = termos_de_busca or TERMOS_BUSCA_PADRAO
+    base = {"what": "estágio", "results_per_page": 50,
+            "what_or": " ".join(termos)}  # o Adzuna separa por espaço e aceita qualquer um
 
     # duas buscas: perto de Goiânia, e remotas de qualquer cidade
     respostas = [

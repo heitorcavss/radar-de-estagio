@@ -55,7 +55,7 @@ if __name__ == "__main__":
     if obtido != esperado:
         falhas.append(f"dados falsos: sobrou {obtido - esperado}, faltou {esperado - obtido}")
 
-    # 2- Casos com campos desconhecidos (None), como vêm do Adzuna.
+    # 2- Casos com campos desconhecidos (None), como vêm da busca real.
     base = {"area": None, "cidade": "Goiânia", "modalidade": None, "linguagens": []}
     casos = [
         ("tudo desconhecido mantém", {"cidade": None}, True),

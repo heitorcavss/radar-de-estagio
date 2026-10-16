@@ -7,43 +7,6 @@ import unicodedata
 
 import requests
 
-URL_ADZUNA = "https://api.adzuna.com/v1/api/jobs/br/search/1"
-
-
-def _chamar_adzuna(parametros: dict) -> dict:
-    """Faz uma busca no Adzuna. Devolve {"status": "success", "total": n, "resultados": [...]}
-    ou {"status": "error", "error_message": ...}.
-
-    O try/except cobre só a chamada externa e captura só erros esperados (rede, HTTP, JSON).
-    As mensagens são fixas de propósito: o texto de uma exceção do requests traz a URL com
-    app_key, e a mensagem de erro chega ao modelo.
-    """
-    app_id = os.environ.get("ADZUNA_APP_ID")
-    app_key = os.environ.get("ADZUNA_APP_KEY")
-    if not app_id or not app_key:
-        return {"status": "error", "error_message": "ADZUNA_APP_ID ou ADZUNA_APP_KEY não configurados no .env."}
-
-    try:
-        #esse format é o uso padrao do requests.get() url,params= (que monta a query string automaticamente), timeout
-        response = requests.get(
-            URL_ADZUNA,
-            params={"app_id": app_id, "app_key": app_key, **parametros},
-            timeout=15,
-        )
-        response.raise_for_status() #lança HTTPError se o status code não for 2xx
-        dados = response.json()
-    except requests.Timeout:
-        return {"status": "error", "error_message": "O Adzuna demorou demais para responder."}
-    except requests.ConnectionError:
-        return {"status": "error", "error_message": "Não foi possível conectar ao Adzuna."}
-    except requests.HTTPError as e:
-        return {"status": "error", "error_message": f"O Adzuna respondeu com erro HTTP {e.response.status_code}."}
-    except ValueError:  # resposta que não é JSON (JSONDecodeError herda de ValueError)
-        return {"status": "error", "error_message": "O Adzuna devolveu uma resposta fora do formato esperado."}
-
-    return {"status": "success", "total": dados.get("count", 0), "resultados": dados.get("results", [])}
-
-
 LINGUAGENS_CONHECIDAS = ["Python", "Java", "JavaScript", "TypeScript", "PHP", "Ruby",
                          "Kotlin", "Swift", "Dart", "Scala", "C++", "C#"]
 
@@ -72,23 +35,13 @@ TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "sql", "tecnologia da in
 
 
 def _sem_acento(texto: str) -> str:
-    """Minúsculas e sem acento, para 'híbrido' e 'hibrido' serem a mesma coisa."""
+    """Minúsculas e sem acento, para 'estágio' e 'estagio' serem a mesma coisa."""
     return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode().lower()
 
 
 def _tem_palavra(palavra: str, texto: str) -> bool:
     """True se a palavra aparece inteira no texto (já sem acento e minúsculo)."""
     return re.search(rf"\b{re.escape(palavra)}\b", texto) is not None
-
-
-def _detectar_modalidade(texto: str) -> str | None:
-    if "hibrido" in texto:  # primeiro: vagas híbridas costumam citar "remoto" também
-        return "híbrido"
-    if "remoto" in texto or "home office" in texto:
-        return "remoto"
-    if "presencial" in texto:
-        return "presencial"
-    return None  # desconhecida: o filtro mantém a vaga
 
 
 def _detectar_ti(titulo: str, descricao: str) -> bool:
@@ -119,25 +72,6 @@ def _detectar_linguagens(texto: str) -> list[str]:
     return achadas
 
 
-def _converter_vaga(vaga: dict) -> dict:
-    """Converte uma vaga do Adzuna para o formato interno. O que não dá para saber vira None."""
-    titulo = vaga.get("title", "")
-    descricao = vaga.get("description", "")
-    cidade = vaga.get("location", {}).get("display_name", "").split(",")[0].strip()
-    return {
-        "id": vaga.get("id"),
-        "titulo": titulo,
-        "empresa": vaga.get("company", {}).get("display_name"),
-        "cidade": None if cidade in ("", "Brasil") else cidade,
-        "modalidade": _detectar_modalidade(_sem_acento(titulo + " " + descricao)),
-        "area": _detectar_area(titulo),
-        "ti": _detectar_ti(titulo, descricao),
-        "linguagens": _detectar_linguagens(titulo + " " + descricao),
-        "descricao": descricao,
-        "url": vaga.get("redirect_url"),
-    }
-
-
 URL_SERPAPI = "https://serpapi.com/search"
 LOCAL_SERPAPI = "Goiânia, State of Goiás, Brazil"
 MAX_TERMOS = 3  # cada termo é 1 busca (1 das 250 do mês no plano grátis): limita o gasto
@@ -145,7 +79,8 @@ PAUSA_ENTRE_BUSCAS = 0.5  # segundos
 
 
 def _chamar_serpapi(q: str) -> dict:
-    """Faz uma busca no Google Jobs via SerpApi. Mesmo formato de retorno do _chamar_adzuna.
+    """Faz uma busca no Google Jobs via SerpApi. Devolve {"status": "success", "resultados": [...]}
+    ou {"status": "error", "error_message": ...}.
     Mensagens fixas: o texto de uma exceção do requests traz a URL com a api_key."""
     chave = os.environ.get("SERPAPI_KEY")
     if not chave:

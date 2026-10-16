@@ -2,6 +2,37 @@
 
 Rascunho para virar a seção de decisões do README (fase 10).
 
+## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
+
+**As seções do Adzuna mais abaixo são histórico** (o código do Adzuna foi removido; está no commit `211a37e`).
+
+- **Por que trocou:** o Adzuna devolvia ~10 vagas por busca. O diagnóstico com um `print` do funil mostrou que a API só tinha
+  36 (Goiânia) e 22 (remotas) vagas para a busca; 46 das 58 eram de outras áreas, e o filtro as barrava (certo). O limite
+  era a oferta de estágio de TI no Adzuna, não o código, a paginação ou o modelo. A cota gratuita (25 chamadas de teste, não
+  diária) estava no fim.
+- **Gupy foi testada e descartada:** a API pública do portal (`portal.gupy.io/api/job-search/jobs`) tem filtros `type` e
+  `state`, mas há só 53 estágios em todo Goiás e quase nenhum de TI (nem lendo as descrições). Busca por `jobName` casa quase
+  como frase ("estágio python" = 0). Também deu 0 para estágio remoto + "desenvolvedor". Os termos de uso não proíbem
+  scraping de forma expressa, mas proíbem "agregar, copiar ou duplicar partes" da plataforma (zona cinzenta).
+- **SerpApi (Google Jobs):** plano grátis de 250 buscas/mês. Cada página = 10 vagas = 1 busca. Em 5 buscas de teste vieram
+  27 vagas únicas; 19 passam no filtro (14 em Goiânia/Aparecida, 5 remotas). Agrega Glassdoor, Indeed, Catho, LinkedIn etc.
+- **Como a `buscar_vagas` funciona agora:** uma busca por termo (`"estágio <termo> Goiânia"`, no máximo 3) mais uma remota
+  (`"estágio <tema> remoto"`) = até 4 buscas por pergunta (~60 perguntas/mês). Sem tema, termos padrão `TI`, `dados`,
+  `programação` e tema remoto `desenvolvedor` (medidos). `"estágio python Goiânia"` retornou **0**: o Google Jobs não tolera
+  termo muito específico. Por isso a `instruction` manda **não passar argumento** quando não há tema.
+- **Conversão (`_converter_vaga_serpapi`):** remoto = extensão `Trabalho de casa` ou local `Qualquer lugar`; cidade = o que vem
+  antes de `,` ou ` - `; link = primeiro `apply_options`. Campo novo `estagio` (extensão `Estágio` ou a palavra no título/
+  descrição) e regra nova no filtro: sem sinal de estágio, barra (mantém o nível; evita "Auxiliar de TI").
+- **Dedup:** a mesma vaga aparece com `job_id` diferente em sites diferentes, então a chave é título + empresa (sem acento).
+- **Filtro de tipo `uds` do SerpApi não foi usado:** o código é gerado por busca, exigiria 2 buscas por pergunta.
+- **Segurança:** erros da SerpApi/requests viram mensagens fixas (a URL traz a `api_key`). Chave só no `.env` (`SERPAPI_KEY`).
+- **Erro meu a lembrar:** `printf >> .gitignore` em arquivo sem quebra de linha final cola a linha nova na última (`.adk/` +
+  `dados_gupy/` viraram uma linha e desligaram as duas proteções). Conferir com `git check-ignore -v`.
+- **Erro meu a lembrar:** `python -m radar_estagio.tools` roda o `__main__` e chama a API de verdade (gasta cota). Não rodar
+  só para "ver se importa".
+- **Pendências novas:** filtrar vagas de áreas fora do foco por título (ex.: "Auxiliar", "Aprendiz"); decidir se
+  `JavaScript` entra nos termos de TI do detector; análise com currículo (fases 4 e 5) para ordenar o que sobrar.
+
 ## try/except: cuidado com `except Exception` em código meu
 
 **O que aconteceu (fase 1):** troquei `VAGAS_FALSAS` por `VAGAS_FALSOS` (typo) dentro do `try` de `buscar_vagas`.

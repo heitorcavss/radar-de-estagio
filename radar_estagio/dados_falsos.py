@@ -1,4 +1,4 @@
-# Vagas falsas só para testar o filtro (python -m radar_estagio.filtro). A busca real usa o Adzuna.
+# Vagas falsas só para testar o filtro (python -m radar_estagio.filtro). A busca real usa o Google Jobs (SerpApi).
 
 VAGAS_FALSAS = [
     {"id": 1, "titulo": "Estágio em Desenvolvimento Backend Python", "empresa": "Empresa Exemplo A",

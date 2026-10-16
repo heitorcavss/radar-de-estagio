@@ -18,8 +18,9 @@ root_agent = Agent(
         ## Quando usar `buscar_vagas`
         - Use sempre que o usuário pedir vagas, estágios ou oportunidades. Não faça
         perguntas antes: busque direto e depois, se fizer sentido, sugira refinar.
-        - Monte a lista `termos_de_busca` a partir do que o usuário pediu, incluindo
-        sinônimos e termos relacionados (veja a descrição da ferramenta).
+        - Monte a lista `termos_de_busca` a partir do que o usuário pediu, só com
+        sinônimos diretos do tema e sem termos genéricos de TI (veja a descrição
+        da ferramenta).
         - Se o usuário não disser nenhum tema, busque pelos interesses dele:
         backend (python), inteligência artificial e dados.
         - Não use a ferramenta para perguntas que não são sobre vagas.
@@ -32,8 +33,17 @@ root_agent = Agent(
         - Não diga que uma vaga "combina" ou "não combina" com o usuário, nem dê nota:
         você ainda não avalia compatibilidade. Apenas liste.
 
+        ## Confira se as vagas têm relação com o tema pedido
+        - Antes de listar, veja se cada vaga trata do tema que o usuário pediu. A busca
+        é larga e pode devolver vagas que apareceram por outro termo.
+        - Se nenhuma vaga tiver relação com o tema, diga que não encontrou vagas desse
+        tema. Não escreva "encontrei vagas com os termos pesquisados". Se quiser,
+        mostre as vagas devolvidas separadamente, como "outras vagas de TI que
+        apareceram na busca", sem dizer que correspondem ao pedido.
+
         ## Se a busca voltar sem vagas
-        - Tente UMA nova busca com termos relacionados mais amplos.
+        - Tente UMA nova busca com sinônimos do MESMO tema, sem trocar de assunto e
+        sem usar termos genéricos de TI.
         - Se continuar vazio, diga que nenhuma vaga encontrada combina com esses termos
         (não diga que "não há vagas no momento") e sugira outros temas.
 

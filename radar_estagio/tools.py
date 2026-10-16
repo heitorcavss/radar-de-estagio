@@ -1,5 +1,4 @@
 from .filtro import filtrar_vagas
-from .dados_falsos import VAGAS_FALSAS  # temporário: sai quando a buscar_vagas usar o Adzuna
 
 import os
 import re
@@ -138,74 +137,79 @@ def _converter_vaga(vaga: dict) -> dict:
     }
 
 
+BUSCA_GOIANIA = {"where": "Goiânia", "distance": 30}  # 30 km cobre Goiânia e Aparecida de Goiânia
+
+
 def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
     """
-    Lista vagas de estágio de TI da base de vagas disponível, por tema.
-    Já devolve só vagas que passam nas regras eliminatórias (local, área e linguagem).
-    
+    Busca vagas de estágio de TI reais (Adzuna), em Goiânia e região ou remotas.
+    Já devolve só vagas que passam nas regras eliminatórias (local, área, linguagem
+    e relevância de TI).
+
     Use quando o usuário pedir vagas, estágios ou oportunidades, com ou sem
     um tema. Não use para perguntas gerais (por exemplo, "o que é um agente
     de IA?"). Esta função só lista vagas: não avalia se combinam com o
     usuário nem envia candidatura.
-    
+
     Args:
-        termos_de_busca: Termos para procurar nas vagas. Uma vaga é devolvida
-        se contiver qualquer um dos termos. Inclua sinônimos e termos
-        relacionados de cada tema pedido. Se o usuário pedir mais de um
-        tema, junte todos na mesma lista. Exemplos:
-        "IA" -> ["IA", "machine learning", "NLP", "MLOps"];
-        "backend" -> ["backend", "Python", "Java", "API"].
-        Se omitido, devolve todas as vagas.
+        termos_de_busca: Termos do tema pedido. Uma vaga é devolvida se contiver
+        qualquer um dos termos (no título ou na descrição), então cada termo
+        a mais deixa a busca mais larga. Use só sinônimos diretos do tema, no
+        máximo 5 termos. NUNCA use termos genéricos de TI (software, tecnologia,
+        desenvolvimento, engenharia, TI), porque eles casam com quase toda vaga
+        e trazem vagas sem relação com o tema. Se o tema não for de TI (por
+        exemplo, "astronauta"), passe só os termos dele, sem acrescentar termos
+        de TI. Se o usuário pedir mais de um tema, junte todos na mesma lista.
+        Exemplo: para "ciência de dados", use ["dados", "data science", "analytics"].
+        Se omitido, devolve estágios de TI em geral.
     Returns:
         Um dicionário com:
         - "status": "success" ou "error".
         - "numero_vagas": quantidade de vagas devolvidas (pode ser 0, o que
           significa que nenhuma vaga combinou, não que houve erro).
-        - "vagas": lista de vagas. Cada vaga tem id, titulo, empresa,
-          cidade, modalidade (remoto, híbrido ou presencial), area,
-          linguagens, requisitos, ingles, semestre_minimo e url.
+        - "vagas": lista de vagas. Cada vaga tem id, titulo, empresa (pode ser
+          vazia), cidade (pode ser vazia), modalidade (remoto, híbrido,
+          presencial ou vazia), area (pode ser vazia), ti, linguagens,
+          descricao e url. Campos vazios significam que não deu para saber.
         - "error_message": só aparece se "status" for "error".
     """
-    encontradas = []
-    # o filtro roda antes da busca: só vagas que passam nas regras entram
-    vagas_validas = filtrar_vagas(VAGAS_FALSAS)
-    
-    # Implementação da função de busca de vagas
-    try:
-        #protetor: se não houver termos de busca, devolve todas as vagas
-        if not termos_de_busca:
-            return {"numero_vagas": len(vagas_validas), "vagas": vagas_validas, "status": "success"}
-        #protetor: se termos_de_busca não for uma lista, lança ValueError
-        if not isinstance(termos_de_busca, list):
-            raise ValueError("termos_de_busca deve ser uma lista de strings.")
-        
-        #preparação de termos: tudo minusculo e separar palavras como 'machine learning' em ['machine', 'learning']
-        termos_em_palavras = [termo.lower().split() for termo in termos_de_busca]
-        for vaga in vagas_validas: # pega 1 vaga por vez
-            
-            # para cada vaga, cria se uma lista de palavras com .split() e .lower() para comparar com os termos de busca.
-            # usa-se " ".join() para juntar as listas de linguagens e requisitos em uma única string, que depois é dividida em palavras.
-            # campos: titulo, area, linguagens, requisitos
-            palavras_vaga = (vaga["titulo"] + " " + vaga["area"] + " " + " ".join(vaga["linguagens"]) + " " + " ".join(vaga["requisitos"])).lower().split()
-            
-            
-            for termo in termos_em_palavras: # para cada termo tratado em termos_em_palavras, 
-                 #termo = 'python' (exemplo agora)
-                termo_casou = True
-                for palavra in termo: # para cada palavra em 'python' (ele mesmo)
-                    if palavra not in palavras_vaga: # verificamos se a palavra do termo esta na lista de palavras da vaga. 
-                        # caso sim, add à lista de encontradas e break para não procurar mais nesse termo
-                        termo_casou = False
-                if termo_casou:
-                    encontradas.append(vaga)
-                    break
+    # validação da entrada
+    if termos_de_busca is not None and not isinstance(termos_de_busca, list):
+        return {"numero_vagas": 0, "vagas": [], "status": "error",
+                "error_message": "termos_de_busca deve ser uma lista de strings."}
 
-    except Exception as e:
-        return {"numero_vagas": 0, "vagas": [], "status": "error", "error_message": str(e)}
-    
-    return {"numero_vagas": len(encontradas), "vagas": encontradas, "status": "success"}
+    base = {"what": "estágio", "results_per_page": 50}
+    if termos_de_busca:
+        base["what_or"] = " ".join(termos_de_busca)  # o Adzuna separa por espaço e aceita qualquer um
+
+    # duas buscas: perto de Goiânia, e remotas de qualquer cidade
+    respostas = [
+        _chamar_adzuna({**base, **BUSCA_GOIANIA}),
+        _chamar_adzuna({**base, "what": "estágio remoto"}),
+    ]
+    sucessos = [r for r in respostas if r["status"] == "success"]
+    if not sucessos:  # as duas falharam
+        return {"numero_vagas": 0, "vagas": [], "status": "error",
+                "error_message": respostas[0]["error_message"]}
+
+    # junta as duas listas sem repetir a mesma vaga (pelo id), mantendo a ordem
+    por_id = {}
+    for resposta in sucessos:
+        for vaga in resposta["resultados"]:
+            por_id.setdefault(vaga["id"], vaga)
+
+    convertidas = [_converter_vaga(v) for v in por_id.values()]
+    vagas = filtrar_vagas(convertidas)
+    return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
+
 
 if __name__ == "__main__":
-    resultado = buscar_vagas(["Cybersecurity", "Cibersecurity", "Cibersegurança", "Ciberseguranca", "Segurança da Informação", "Segurança da informacao"])
-    print(resultado)
-    
+    # rodar com: python -m radar_estagio.tools  (gasta 2 chamadas da cota do Adzuna)
+    from dotenv import load_dotenv
+
+    load_dotenv("radar_estagio/.env")
+    resultado = buscar_vagas(["python", "java", "desenvolvedor"])
+    print(resultado["status"], resultado["numero_vagas"])
+    for vaga in resultado["vagas"]:
+        print("-", vaga["titulo"], "|", vaga["cidade"], "|", vaga["modalidade"], "|", vaga["linguagens"])
+        print("  ", vaga["url"])

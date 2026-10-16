@@ -244,8 +244,10 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - [x] Fase 2: ligar `buscar_vagas` ao Adzuna (duas buscas, junção por `id`, conversão, filtro, docstring nova).
   O import de `dados_falsos` saiu do `tools.py`; o arquivo fica só para o teste do `filtro.py`.
 - [x] Fase 2: a busca por termos local foi removida; os termos vão para o `what_or` da API.
-- [x] Fase 2: lista padrão `TERMOS_BUSCA_PADRAO` quando não há tema (feita, testada só com função falsa; falta
-  conferir quantas vagas vêm de verdade, com 1 chamada real). Se ainda vierem poucas: páginas 2 e 3.
+- [x] Fase 2: lista padrão `TERMOS_BUSCA_PADRAO` quando não há tema (feita). Teste no `adk web` (15/10/2026,
+  "me mostra vagas de estagio"): **10 vagas, as mesmas de antes** (4 em Goiânia, 6 remotas, com CRO, Planejamento e
+  Melhoria contínua). Não melhorou: ou o `adk web` não recarregou o código, ou o gargalo é outro. Conferir o `what_or`
+  enviado e, se for isso, tentar as páginas 2 e 3.
   **Cuidado:** `python -m radar_estagio.tools` chama o Adzuna de verdade (2 chamadas por execução).
 - [ ] (antigo) Fase 2: trazer mais vagas: lista padrão de termos de TI quando não há tema, ou páginas 2 e 3. Testar com poucas
   chamadas (cota de teste: pelas minhas contas já passa de 20 das 25; conferir o número exato no painel do Adzuna).

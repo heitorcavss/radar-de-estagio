@@ -2,5 +2,6 @@
 /venv
 __pycache__/
 /curriculos
-.adk/dados_gupy/
+.adk/
+dados_gupy/
 dados_serpapi/

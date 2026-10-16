@@ -30,6 +30,15 @@ Rascunho para virar a seção de decisões do README (fase 10).
   `dados_gupy/` viraram uma linha e desligaram as duas proteções). Conferir com `git check-ignore -v`.
 - **Erro meu a lembrar:** `python -m radar_estagio.tools` roda o `__main__` e chama a API de verdade (gasta cota). Não rodar
   só para "ver se importa".
+- **Fluxo de Git que usei (aprendizado):** criar a branch (`git switch -c`), commitar nela, testar, e só então
+  `git switch main`, `git merge feat/fonte-serpapi`, `git push`. O push é o único passo que publica; o merge local dá para
+  desfazer. `git branch -d` só apaga a branch se ela já estiver dentro da `main` (`-D` força e perde commits não mesclados;
+  usei `-D` na branch da Gupy de propósito, o commit era `8df70b9`).
+- **Fast-forward:** o merge foi *fast-forward* porque a `main` não recebeu commits novos enquanto a branch existia
+  (`git merge-base main feat/fonte-serpapi` = a ponta da `main`). Ou seja, a história continuou em linha reta e o Git só
+  moveu a `main` para a frente, sem commit de merge nem conflito. **Não tem a ver com o conteúdo** (ter removido código
+  não influencia): se alguém commitasse na `main` no meio, o merge teria que juntar dois caminhos, mesmo se a branch só
+  adicionasse linhas. `git merge --ff-only` recusa se não for possível, o que serve de trava de segurança.
 - **Pendências novas:** filtrar vagas de áreas fora do foco por título (ex.: "Auxiliar", "Aprendiz"); decidir se
   `JavaScript` entra nos termos de TI do detector; análise com currículo (fases 4 e 5) para ordenar o que sobrar.
 
@@ -92,10 +101,11 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - **Fase 1: concluída e publicada.** `buscar_vagas` com 18 vagas falsas, ligada ao agente e testada no `adk web`.
   `.env` fora do Git. Repo no GitHub ligado (`origin/main`). Commits da fase:
   `e890987` (estrutura), `5bf2c6c` (`buscar_vagas`), `0262341` (agente + testes no `adk web`).
-- **Fase 2: em andamento (15/10/2026).** API escolhida: Adzuna (país `br`), chaves no `.env`. `_chamar_adzuna`,
-  `_converter_vaga` (com os detectores) e o filtro v2 com regra de TI estão no GitHub (`b8e3d02..de4f726`).
-  **A `buscar_vagas` agora usa o Adzuna** (duas buscas, sem dados falsos) e foi testada no `adk web`. Falta: aumentar
-  o número de vagas (busca restrita demais) e escolher a fonte para o uso contínuo (ver Pendências).
+- **Fase 2: concluída e publicada (16/10/2026).** Começou com o Adzuna (`b8e3d02..de4f726`), mas a fonte final é o
+  **Google Jobs via SerpApi** (ver a seção no topo). `buscar_vagas` busca, converte, filtra (TI, estágio, cidade, área,
+  linguagem) e foi testada no `adk web`. Está na `main` do GitHub (`cd4459e`). Commits da troca: `63b17de` (SerpApi),
+  `4bd18ab` (`.gitignore`), `cd4459e` (remove o Adzuna, atualiza as notas). O código do Adzuna está em `211a37e`.
+- **Próximo:** fases 4 e 5 (análise com currículo). Ver "Pendências novas" na seção do topo.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

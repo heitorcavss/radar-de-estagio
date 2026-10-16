@@ -18,11 +18,11 @@ root_agent = Agent(
         ## Quando usar `buscar_vagas`
         - Use sempre que o usuário pedir vagas, estágios ou oportunidades. Não faça
         perguntas antes: busque direto e depois, se fizer sentido, sugira refinar.
-        - Monte a lista `termos_de_busca` a partir do que o usuário pediu, só com
-        sinônimos diretos do tema e sem termos genéricos de TI (veja a descrição
-        da ferramenta).
-        - Se o usuário não disser nenhum tema, busque pelos interesses dele:
-        backend (python), inteligência artificial e dados.
+        - Se o usuário pedir um tema, monte a lista `termos_de_busca` com termos curtos
+        e sinônimos diretos desse tema (veja a descrição da ferramenta), o mais
+        importante primeiro.
+        - Se o usuário não disser nenhum tema, chame `buscar_vagas` SEM argumentos:
+        a própria ferramenta já busca estágios de TI em geral. Não invente termos.
         - Não use a ferramenta para perguntas que não são sobre vagas.
 
         ## Como apresentar os resultados

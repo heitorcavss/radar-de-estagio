@@ -2,6 +2,7 @@ from .filtro import filtrar_vagas
 
 import os
 import re
+import time
 import unicodedata
 
 import requests
@@ -137,19 +138,86 @@ def _converter_vaga(vaga: dict) -> dict:
     }
 
 
-# Termos usados quando o usuário não dá tema. Específicos de TI e ligados aos interesses
-# (backend, IA, dados): termos curtos como "ti" trazem ruído. O filtro barra o que sobrar de fora.
-TERMOS_BUSCA_PADRAO = ["python", "java", "backend", "desenvolvedor", "dados",
-                       "inteligência artificial", "programação"]
+URL_SERPAPI = "https://serpapi.com/search"
+LOCAL_SERPAPI = "Goiânia, State of Goiás, Brazil"
+MAX_TERMOS = 3  # cada termo é 1 busca (1 das 250 do mês no plano grátis): limita o gasto
+PAUSA_ENTRE_BUSCAS = 0.5  # segundos
 
-BUSCA_GOIANIA = {"where": "Goiânia", "distance": 30}  # 30 km cobre Goiânia e Aparecida de Goiânia
+
+def _chamar_serpapi(q: str) -> dict:
+    """Faz uma busca no Google Jobs via SerpApi. Mesmo formato de retorno do _chamar_adzuna.
+    Mensagens fixas: o texto de uma exceção do requests traz a URL com a api_key."""
+    chave = os.environ.get("SERPAPI_KEY")
+    if not chave:
+        return {"status": "error", "error_message": "SERPAPI_KEY não configurada no .env."}
+
+    try:
+        response = requests.get(
+            URL_SERPAPI,
+            params={"engine": "google_jobs", "q": q, "location": LOCAL_SERPAPI,
+                    "hl": "pt", "gl": "br", "api_key": chave},
+            timeout=30,
+        )
+        response.raise_for_status()
+        dados = response.json()
+    except requests.Timeout:
+        return {"status": "error", "error_message": "A SerpApi demorou demais para responder."}
+    except requests.ConnectionError:
+        return {"status": "error", "error_message": "Não foi possível conectar à SerpApi."}
+    except requests.HTTPError as e:
+        return {"status": "error", "error_message": f"A SerpApi respondeu com erro HTTP {e.response.status_code}."}
+    except ValueError:
+        return {"status": "error", "error_message": "A SerpApi devolveu uma resposta fora do formato esperado."}
+
+    erro = dados.get("error")
+    # "nenhum resultado" vem como erro com status 200: para nós é busca vazia, não falha
+    if erro and "hasn't returned any results" not in erro:
+        return {"status": "error", "error_message": "A SerpApi devolveu um erro."}
+    return {"status": "success", "resultados": dados.get("jobs_results", [])}
+
+
+def _converter_vaga_serpapi(vaga: dict) -> dict:
+    """Converte uma vaga do Google Jobs (SerpApi) para o formato interno.
+    Modalidade: 'Trabalho de casa' nas extensões ou local 'Qualquer lugar' = remoto.
+    Estágio: extensão 'Estágio' ou a palavra no título/descrição."""
+    titulo = vaga.get("title", "")
+    descricao = vaga.get("description", "")
+    extensoes = vaga.get("extensions") or []
+    local = vaga.get("location") or ""
+    remoto = "Trabalho de casa" in extensoes or local == "Qualquer lugar"
+    # "Goiânia, GO" e "Goiânia - GO": a cidade é o que vem antes da vírgula ou do hífen
+    cidade = re.split(r",| - ", local)[0].strip()
+    ligacoes = vaga.get("apply_options") or []
+    url = (ligacoes[0].get("link") if ligacoes else None) or vaga.get("source_link") or vaga.get("share_link")
+    return {
+        "id": vaga.get("job_id"),
+        "titulo": titulo,
+        "empresa": vaga.get("company_name") or None,
+        "cidade": None if cidade in ("", "Qualquer lugar") else cidade,
+        "modalidade": "remoto" if remoto else None,
+        "area": _detectar_area(titulo),
+        "ti": _detectar_ti(titulo, descricao),
+        "estagio": "Estágio" in extensoes or _tem_palavra("estagio", _sem_acento(titulo)) or
+                   _tem_palavra("estagiario", _sem_acento(titulo)) or
+                   _tem_palavra("estagiaria", _sem_acento(titulo)) or
+                   _tem_palavra("estagio", _sem_acento(descricao)),
+        "linguagens": _detectar_linguagens(titulo + " " + descricao),
+        "descricao": descricao,
+        "url": url,
+    }
+
+
+# Termos usados quando o usuário não dá tema. Medidos no SerpApi: "estágio TI Goiânia" (7 vagas),
+# "estágio dados Goiânia" (5) e "estagiário programação Goiânia" (10). "python" sozinho zerou.
+TERMOS_BUSCA_PADRAO = ["TI", "dados", "programação"]
+TEMA_REMOTO_PADRAO = "desenvolvedor"  # "estágio desenvolvedor remoto" trouxe 10 vagas remotas
 
 
 def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
     """
-    Busca vagas de estágio de TI reais (Adzuna), em Goiânia e região ou remotas.
-    Já devolve só vagas que passam nas regras eliminatórias (local, área, linguagem
-    e relevância de TI).
+    Busca vagas de estágio de TI reais (Google Jobs), em Goiânia e região ou remotas.
+    Já devolve só vagas que passam nas regras eliminatórias (estágio, local, área,
+    linguagem e relevância de TI).
 
     Use quando o usuário pedir vagas, estágios ou oportunidades, com ou sem
     um tema. Não use para perguntas gerais (por exemplo, "o que é um agente
@@ -157,16 +225,17 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
     usuário nem envia candidatura.
 
     Args:
-        termos_de_busca: Termos do tema pedido. Uma vaga é devolvida se contiver
-        qualquer um dos termos (no título ou na descrição), então cada termo
-        a mais deixa a busca mais larga. Use só sinônimos diretos do tema, no
-        máximo 5 termos. NUNCA use termos genéricos de TI (software, tecnologia,
-        desenvolvimento, engenharia, TI), porque eles casam com quase toda vaga
-        e trazem vagas sem relação com o tema. Se o tema não for de TI (por
-        exemplo, "astronauta"), passe só os termos dele, sem acrescentar termos
-        de TI. Se o usuário pedir mais de um tema, junte todos na mesma lista.
-        Exemplo: para "ciência de dados", use ["dados", "data science", "analytics"].
-        Se omitido, devolve estágios de TI em geral.
+        termos_de_busca: Termos do tema pedido. Cada termo vira uma busca separada
+        ("estágio <termo> Goiânia"), e só os 3 primeiros são usados, então coloque
+        o mais importante primeiro. Use termos curtos e comuns em anúncios (por
+        exemplo "dados", "backend", "inteligência artificial"); termos muito
+        específicos, como o nome de uma biblioteca, costumam não achar nada. Se o
+        tema não for de TI (por exemplo, "astronauta"), passe só o termo dele, sem
+        acrescentar termos de TI. Se o usuário pedir mais de um tema, junte todos
+        na mesma lista. Exemplo: para "ciência de dados", use ["ciência de dados",
+        "dados", "analytics"].
+        Se o usuário não pedir um tema, NÃO passe este argumento: a função já
+        busca estágios de TI em geral.
     Returns:
         Um dicionário com:
         - "status": "success" ou "error".
@@ -183,38 +252,48 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
         return {"numero_vagas": 0, "vagas": [], "status": "error",
                 "error_message": "termos_de_busca deve ser uma lista de strings."}
 
-    # sem tema, usa os termos padrão: sem what_or o Adzuna traz 50 estágios de todas as áreas
-    termos = termos_de_busca or TERMOS_BUSCA_PADRAO
-    base = {"what": "estágio", "results_per_page": 50,
-            "what_or": " ".join(termos)}  # o Adzuna separa por espaço e aceita qualquer um
+    # sem tema, usa os termos padrão; cada termo é uma busca em Goiânia, mais uma busca remota
+    termos = [t for t in (termos_de_busca or TERMOS_BUSCA_PADRAO) if isinstance(t, str) and t.strip()]
+    termos = (termos or TERMOS_BUSCA_PADRAO)[:MAX_TERMOS]
+    tema_remoto = termos_de_busca[0] if termos_de_busca else TEMA_REMOTO_PADRAO
+    buscas = [f"estágio {t} Goiânia" for t in termos] + [f"estágio {tema_remoto} remoto"]
 
-    # duas buscas: perto de Goiânia, e remotas de qualquer cidade
-    respostas = [
-        _chamar_adzuna({**base, **BUSCA_GOIANIA}),
-        _chamar_adzuna({**base, "what": "estágio remoto"}),
-    ]
+    respostas = []
+    for i, q in enumerate(buscas):
+        if i > 0:
+            time.sleep(PAUSA_ENTRE_BUSCAS)
+        respostas.append(_chamar_serpapi(q))
     sucessos = [r for r in respostas if r["status"] == "success"]
-    if not sucessos:  # as duas falharam
+    if not sucessos:  # todas falharam
         return {"numero_vagas": 0, "vagas": [], "status": "error",
                 "error_message": respostas[0]["error_message"]}
 
-    # junta as duas listas sem repetir a mesma vaga (pelo id), mantendo a ordem
-    por_id = {}
+    # junta as listas sem repetir: a mesma vaga aparece com ids diferentes em sites diferentes,
+    # então a chave é título + empresa
+    unicas = {}
     for resposta in sucessos:
         for vaga in resposta["resultados"]:
-            por_id.setdefault(vaga["id"], vaga)
+            chave = (_sem_acento(vaga.get("title", "")), _sem_acento(vaga.get("company_name") or ""))
+            unicas.setdefault(chave, vaga)
 
-    convertidas = [_converter_vaga(v) for v in por_id.values()]
+    convertidas = [_converter_vaga_serpapi(v) for v in unicas.values()]
     vagas = filtrar_vagas(convertidas)
+    # DEBUG temporário: funil da busca (sem chaves nem texto das vagas)
+    print("[funil] buscas:", buscas,
+          "| recebidas por busca:", [len(r["resultados"]) for r in sucessos],
+          "| únicas:", len(convertidas),
+          "| estágio:", sum(v["estagio"] for v in convertidas),
+          "| com TI:", sum(v["ti"] for v in convertidas),
+          "| passam no filtro:", len(vagas))
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
 
 if __name__ == "__main__":
-    # rodar com: python -m radar_estagio.tools  (gasta 2 chamadas da cota do Adzuna)
+    # rodar com: python -m radar_estagio.tools  (gasta 4 das 250 buscas do mês na SerpApi)
     from dotenv import load_dotenv
 
     load_dotenv("radar_estagio/.env")
-    resultado = buscar_vagas(["python", "java", "desenvolvedor"])
+    resultado = buscar_vagas()
     print(resultado["status"], resultado["numero_vagas"])
     for vaga in resultado["vagas"]:
         print("-", vaga["titulo"], "|", vaga["cidade"], "|", vaga["modalidade"], "|", vaga["linguagens"])

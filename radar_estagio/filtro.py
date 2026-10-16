@@ -21,6 +21,11 @@ def passa_no_filtro(vaga: dict) -> bool:
     if vaga.get("ti") is False:
         return False
 
+    # Nível: só estágio. Sem sinal de estágio no título, extensões ou descrição, barra.
+    # .get pelo mesmo motivo do "ti": sem o campo, mantém.
+    if vaga.get("estagio") is False:
+        return False
+
     cidade = vaga["cidade"]
     if cidade is not None and cidade not in CIDADES_BASE and vaga["modalidade"] != "remoto":
         return False
@@ -64,6 +69,8 @@ if __name__ == "__main__":
         ("mobile barra", {"area": "mobile"}, False),
         ("sem sinal de TI barra", {"ti": False}, False),
         ("com sinal de TI mantém", {"ti": True}, True),
+        ("sem sinal de estágio barra", {"estagio": False}, False),
+        ("com sinal de estágio mantém", {"estagio": True}, True),
         ("dados só com Scala mantém", {"area": "dados", "linguagens": ["Scala"]}, True),
     ]
     for nome, mudancas, esperado_caso in casos:

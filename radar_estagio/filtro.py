@@ -26,6 +26,11 @@ def passa_no_filtro(vaga: dict) -> bool:
     if vaga.get("estagio") is False:
         return False
 
+    # Pede anos de experiência ou é vaga pleno/sênior: não é para estágio, mesmo que o Google
+    # Jobs marque "Estágio". .get pelo mesmo motivo do "ti".
+    if vaga.get("exige_experiencia") is True:
+        return False
+
     cidade = vaga["cidade"]
     if cidade is not None and cidade not in CIDADES_BASE and vaga["modalidade"] != "remoto":
         return False
@@ -71,6 +76,8 @@ if __name__ == "__main__":
         ("com sinal de TI mantém", {"ti": True}, True),
         ("sem sinal de estágio barra", {"estagio": False}, False),
         ("com sinal de estágio mantém", {"estagio": True}, True),
+        ("exige experiência barra", {"exige_experiencia": True}, False),
+        ("sem exigir experiência mantém", {"exige_experiencia": False}, True),
         ("dados só com Scala mantém", {"area": "dados", "linguagens": ["Scala"]}, True),
     ]
     for nome, mudancas, esperado_caso in casos:

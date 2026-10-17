@@ -1,9 +1,11 @@
 from .filtro import filtrar_vagas
 
+import json
 import os
 import re
 import time
 import unicodedata
+from pathlib import Path
 
 import requests
 
@@ -28,9 +30,10 @@ TERMOS_TI_TITULO = ["ti", "tecnologia", "software", "dados", "desenvolvedor", "d
                     "programacao", "sistemas", "computacao", "informatica", "dev", "devops",
                     "cloud", "backend", "back-end", "ia", "inteligencia artificial", "bi", "data",
                     "analytics", "infraestrutura", "redes", "suporte tecnico", "banco de dados"]
+# Nomes de curso ("ciência da computação", "engenharia de software") ficam de fora: anúncios de
+# qualquer área listam quem pode se candidatar, e isso deixou passar uma vaga de vendas (Auvo).
 TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "sql", "tecnologia da informacao",
-                       "desenvolvimento de software", "ciencia da computacao", "engenharia de software",
-                       "engenharia da computacao", "analise de sistemas", "banco de dados",
+                       "desenvolvimento de software", "analise de sistemas", "banco de dados",
                        "ciencia de dados", "engenharia de dados", "machine learning"]
 
 
@@ -51,6 +54,34 @@ def _detectar_ti(titulo: str, descricao: str) -> bool:
     descricao = _sem_acento(descricao)
     return (any(_tem_palavra(p, titulo) for p in TERMOS_TI_TITULO)
             or any(_tem_palavra(p, descricao) for p in TERMOS_TI_DESCRICAO))
+
+
+ANOS_MINIMOS_EXPERIENCIA = 2  # 1 ano ainda aparece em anúncios de estágio; 2 ou mais não
+PADROES_EXPERIENCIA = [
+    r"(\d+)\+?\s*(?:anos|years?)\s+(?:de\s+|of\s+)?(?:experiencia|experience)",  # "5+ years of experience"
+    r"experiencia\s+(?:minima\s+)?(?:de\s+)?(\d+)\+?\s*(?:anos|years?)",  # "experiência de 3 anos"
+]
+
+
+PALAVRAS_SOBRE_EMPRESA = ["empresa", "somos", "temos", "nossa", "our ", "we ", "company"]
+
+
+def _exige_experiencia(titulo: str, descricao: str) -> bool:
+    """True se o título diz pleno/sênior ou a descrição pede ANOS_MINIMOS_EXPERIENCIA ou mais
+    anos de experiência. Meses e "experiência" sem número não contam."""
+    titulo = _sem_acento(titulo)
+    if any(_tem_palavra(p, titulo) for p in ("senior", "pleno", "sr")):
+        return True
+    descricao = _sem_acento(descricao)
+    for padrao in PADROES_EXPERIENCIA:
+        for m in re.finditer(padrao, descricao):
+            antes = descricao[max(0, m.start() - 60):m.start()]
+            # "somos uma empresa com mais de 20 anos de experiência" fala da empresa, não da vaga
+            if any(p in antes for p in PALAVRAS_SOBRE_EMPRESA):
+                continue
+            if int(m.group(1)) >= ANOS_MINIMOS_EXPERIENCIA:
+                return True
+    return False
 
 
 def _detectar_area(titulo: str) -> str | None:
@@ -136,6 +167,7 @@ def _converter_vaga_serpapi(vaga: dict) -> dict:
                    _tem_palavra("estagiario", _sem_acento(titulo)) or
                    _tem_palavra("estagiaria", _sem_acento(titulo)) or
                    _tem_palavra("estagio", _sem_acento(descricao)),
+        "exige_experiencia": _exige_experiencia(titulo, descricao),
         "linguagens": _detectar_linguagens(titulo + " " + descricao),
         "descricao": descricao,
         "url": url,
@@ -213,7 +245,7 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
 
     convertidas = [_converter_vaga_serpapi(v) for v in unicas.values()]
     vagas = filtrar_vagas(convertidas)
-    # DEBUG temporário: funil da busca (sem chaves nem texto das vagas)
+    # DEBUG temporário
     print("[funil] buscas:", buscas,
           "| recebidas por busca:", [len(r["resultados"]) for r in sucessos],
           "| únicas:", len(convertidas),
@@ -221,6 +253,31 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
           "| com TI:", sum(v["ti"] for v in convertidas),
           "| passam no filtro:", len(vagas))
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
+
+
+CAMINHO_PERFIL = Path(__file__).parent / "perfil.json"
+
+
+def carregar_perfil() -> dict:
+    """
+    Devolve o perfil do usuário (formação, habilidades, projetos), tirado do currículo.
+
+    Use antes de avaliar a compatibilidade de vagas com o usuário. Não precisa de
+    argumentos e não usa a internet, então pode ser chamada uma vez por conversa.
+
+    Returns:
+        Um dicionário com:
+        - "status": "success" ou "error".
+        - "perfil": os dados do perfil (só quando o status é "success").
+        - "error_message": o motivo, quando o status é "error".
+    """
+    try:
+        with open(CAMINHO_PERFIL, encoding="utf-8") as arquivo:
+            return {"status": "success", "perfil": json.load(arquivo)}
+    except FileNotFoundError:
+        return {"status": "error", "error_message": "O arquivo perfil.json não foi encontrado."}
+    except json.JSONDecodeError:
+        return {"status": "error", "error_message": "O arquivo perfil.json está com formato inválido."}
 
 
 if __name__ == "__main__":

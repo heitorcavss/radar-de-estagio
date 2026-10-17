@@ -30,9 +30,10 @@ TERMOS_TI_TITULO = ["ti", "tecnologia", "software", "dados", "desenvolvedor", "d
                     "programacao", "sistemas", "computacao", "informatica", "dev", "devops",
                     "cloud", "backend", "back-end", "ia", "inteligencia artificial", "bi", "data",
                     "analytics", "infraestrutura", "redes", "suporte tecnico", "banco de dados"]
+# Nomes de curso ("ciência da computação", "engenharia de software") ficam de fora: anúncios de
+# qualquer área listam quem pode se candidatar, e isso deixou passar uma vaga de vendas (Auvo).
 TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "sql", "tecnologia da informacao",
-                       "desenvolvimento de software", "ciencia da computacao", "engenharia de software",
-                       "engenharia da computacao", "analise de sistemas", "banco de dados",
+                       "desenvolvimento de software", "analise de sistemas", "banco de dados",
                        "ciencia de dados", "engenharia de dados", "machine learning"]
 
 

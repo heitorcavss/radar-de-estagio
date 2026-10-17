@@ -2,6 +2,44 @@
 
 Rascunho para virar a seção de decisões do README (fase 10).
 
+## Perfil e análise de compatibilidade (17/10/2026, PR #1)
+
+- **Perfil:** `radar_estagio/perfil.json`, feito a partir do `CV_Heitor_Cabral.pdf` (a pasta `curriculos/` é ignorada pelo
+  Git). Só os campos úteis para a análise; sem telefone e e-mail. Django, NLP e LLMs ficam em `habilidades_parciais`
+  (o agente diz "em estudo"). O perfil é pequeno e cabe inteiro no pedido, então **não precisa de RAG** agora.
+- **Tool `carregar_perfil`:** lê o JSON e devolve. Erros previstos (arquivo faltando, JSON quebrado) viram mensagem fixa,
+  no mesmo padrão da `buscar_vagas`.
+- **Quem dá a nota:** o modelo, seguindo regras na `instruction` (nota 0-100, "Você já tem", "Lacunas", ordem decrescente).
+  Não é cálculo no código, então a nota pode variar um pouco entre conversas. Peso: 70% tecnologias, 30% área e nível.
+- **Teste à mão no `adk web` (7 perguntas) achou 4 problemas, e o que fiz:**
+  1. A nota ignorava exigência eliminatória (Liferay pedia 6º período, Narwal pedia graduação concluída; ficaram com 80
+     e 75). Regra nova: exigência que o usuário não cumpre limita a nota a 60 e mostra "Atenção:".
+  2. O agente inventava habilidades ("visão geral de TI", "domina bancos de dados"). Regra nova: "Você já tem" só com itens
+     escritos no perfil, sem adjetivos; se nada bate, escrever "Nenhuma correspondência direta".
+  3. O agente reescreveu um título de vaga. Regra nova: copiar o título exatamente como veio.
+  4. Suporte, help desk e vendas ficavam com 45-55. Regra nova: limite de 50.
+  Depois das regras, Liferay caiu para 60 e Narwal para 55, ambas com "Atenção:".
+- **Bug do filtro 1 (Auvo, vaga de vendas):** passou como "TI" porque a descrição listava "Ciência da Computação" entre os
+  cursos aceitos. Nome de curso diz *quem pode se candidatar*, não o que o trabalho é. Tirei `ciencia da computacao`,
+  `engenharia de software` e `engenharia da computacao` de `TERMOS_TI_DESCRICAO`. Testei nas 33 vagas salvas: só a Auvo saiu.
+- **Bug do filtro 2 (Amazon Connect, sênior):** o Google Jobs marcou a vaga com a extensão "Estágio", mesmo pedindo "6+ years
+  of experience". Campo novo `exige_experiencia` (`_exige_experiencia`): título com sênior/pleno/sr, ou 2 ou mais anos de
+  experiência na descrição (português e inglês). **Falso positivo que eu mesmo causei:** "empresa com mais de 20 anos de
+  experiência" (Clicksoft) barrou um estágio de verdade; passei a ignorar números em frases com "empresa", "somos", "temos"
+  etc. Moral: testar a regra nova em todos os dados salvos e olhar *cada* vaga que ela barra, não só a que eu queria barrar.
+- **Como depurei sem inventar causa:** quando não tinha o texto da vaga, disse que não sabia e gastei 1 busca (depois mais 2)
+  para pegar o texto real, salvando em `dados_serpapi/` para reusar. Gasto total do dia: 5 buscas de 250.
+- **Pausa de 0,5 s entre buscas (`PAUSA_ENTRE_BUSCAS`):** é só precaução contra *rate limiting* (muitos pedidos colados,
+  erro HTTP 429). Nunca vi 429 aqui e não testei sem a pausa. Se um dia aparecer, o certo é *retry com backoff*.
+- **RAG (ideia para depois):** o primeiro uso que faz sentido é busca por significado nas vagas salvas, quando o banco
+  tiver centenas delas. Currículo e projetos não precisam.
+- **Git (aprendizado):** reescrevi as mensagens de commits da branch (ainda não enviada) com `git filter-branch --msg-filter`
+  para tirar uma linha `Co-Authored-By`. Só é seguro antes do `push`, porque muda o hash de todos os commits. Conferi com
+  `git diff <backup> HEAD` que o conteúdo ficou idêntico, e só então apaguei a branch de backup.
+- **Pendências:** tirar o `print` `[funil]` do `buscar_vagas`; barrar "Auxiliar/Aprendiz" por título; decidir se JavaScript
+  entra nos termos de TI; salvar resultados em banco; conferir se a resposta do agente foi cortada na vaga 13 da pergunta 1
+  (pode ter sido só a cópia); a vaga Strider foi barrada por experiência e eu não li o texto para confirmar.
+
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
 
 **As seções do Adzuna mais abaixo são histórico** (o código do Adzuna foi removido; está no commit `211a37e`).

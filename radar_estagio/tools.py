@@ -56,6 +56,34 @@ def _detectar_ti(titulo: str, descricao: str) -> bool:
             or any(_tem_palavra(p, descricao) for p in TERMOS_TI_DESCRICAO))
 
 
+ANOS_MINIMOS_EXPERIENCIA = 2  # 1 ano ainda aparece em anúncios de estágio; 2 ou mais não
+PADROES_EXPERIENCIA = [
+    r"(\d+)\+?\s*(?:anos|years?)\s+(?:de\s+|of\s+)?(?:experiencia|experience)",  # "5+ years of experience"
+    r"experiencia\s+(?:minima\s+)?(?:de\s+)?(\d+)\+?\s*(?:anos|years?)",  # "experiência de 3 anos"
+]
+
+
+PALAVRAS_SOBRE_EMPRESA = ["empresa", "somos", "temos", "nossa", "our ", "we ", "company"]
+
+
+def _exige_experiencia(titulo: str, descricao: str) -> bool:
+    """True se o título diz pleno/sênior ou a descrição pede ANOS_MINIMOS_EXPERIENCIA ou mais
+    anos de experiência. Meses e "experiência" sem número não contam."""
+    titulo = _sem_acento(titulo)
+    if any(_tem_palavra(p, titulo) for p in ("senior", "pleno", "sr")):
+        return True
+    descricao = _sem_acento(descricao)
+    for padrao in PADROES_EXPERIENCIA:
+        for m in re.finditer(padrao, descricao):
+            antes = descricao[max(0, m.start() - 60):m.start()]
+            # "somos uma empresa com mais de 20 anos de experiência" fala da empresa, não da vaga
+            if any(p in antes for p in PALAVRAS_SOBRE_EMPRESA):
+                continue
+            if int(m.group(1)) >= ANOS_MINIMOS_EXPERIENCIA:
+                return True
+    return False
+
+
 def _detectar_area(titulo: str) -> str | None:
     titulo = _sem_acento(titulo)
     for area, palavras in AREAS_POR_PALAVRA.items():
@@ -139,6 +167,7 @@ def _converter_vaga_serpapi(vaga: dict) -> dict:
                    _tem_palavra("estagiario", _sem_acento(titulo)) or
                    _tem_palavra("estagiaria", _sem_acento(titulo)) or
                    _tem_palavra("estagio", _sem_acento(descricao)),
+        "exige_experiencia": _exige_experiencia(titulo, descricao),
         "linguagens": _detectar_linguagens(titulo + " " + descricao),
         "descricao": descricao,
         "url": url,

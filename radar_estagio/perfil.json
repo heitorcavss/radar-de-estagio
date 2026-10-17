@@ -1,0 +1,67 @@
+{
+  "fonte": "curriculos/CV_Heitor_Cabral.pdf",
+  "objetivo": {
+    "nivel": "estágio ou júnior",
+    "areas": ["backend (Python)", "aplicações de IA"],
+    "locais": ["Goiânia-GO", "remoto"]
+  },
+  "formacao": {
+    "curso": "Engenharia de Software",
+    "instituicao": "Instituto Federal de Goiás (IFG)",
+    "periodo": "2025 a 2029/1 (previsão)"
+  },
+  "habilidades": {
+    "linguagens": ["Python", "Java", "C", "SQL"],
+    "backend_e_dados": ["FastAPI", "Flask", "SQLAlchemy", "APIs REST", "PostgreSQL"],
+    "ia_e_agentes": ["Google ADK", "Gemini", "Claude", "n8n", "engenharia de prompts"],
+    "ferramentas": ["Git", "GitHub", "Docker"]
+  },
+  "habilidades_parciais": ["Django", "NLP", "LLMs"],
+  "projetos": [
+    {
+      "nome": "Automação de etiquetas eletrônicas de gôndola (ESL)",
+      "tecnologias": ["Python", "FastAPI", "API REST"],
+      "resumo": "Sistema para empresa cliente que sincroniza produtos, preços e estoque com etiquetas e-ink via API de terceiros; MVP validado em hardware real."
+    },
+    {
+      "nome": "TrelloPilot",
+      "tecnologias": ["Python", "Google ADK", "Gemini", "API do Trello"],
+      "resumo": "Agente de IA que gerencia cards do Trello por linguagem natural."
+    },
+    {
+      "nome": "Radar de Estágio",
+      "tecnologias": ["Python", "Google ADK", "SerpApi"],
+      "resumo": "Agente de IA que busca vagas de estágio em fontes reais e compara com o currículo."
+    },
+    {
+      "nome": "Sistema multiagente com Google ADK",
+      "tecnologias": ["Python", "Gemini"],
+      "resumo": "Agente orquestrador e subagentes de busca e geração de código (bootcamp DIO/CI&T)."
+    },
+    {
+      "nome": "Agente de IA para conteúdo no LinkedIn",
+      "tecnologias": ["n8n", "Docker", "Gemini", "PostgreSQL"],
+      "resumo": "Geração e publicação diária de conteúdo, implantada em nuvem."
+    },
+    {
+      "nome": "API de gestão acadêmica",
+      "tecnologias": ["Python", "FastAPI", "SQLAlchemy"],
+      "resumo": "Endpoints REST e modelagem relacional com joinedload."
+    },
+    {
+      "nome": "Biblioteca de álgebra linear em C",
+      "tecnologias": ["C"],
+      "resumo": "Operações com matrizes, determinante por cofatores e eliminação de Gauss."
+    }
+  ],
+  "pesquisa": "PIBIC voluntário (09/2026 em diante): app móvel para fluxo de pacientes em unidade básica de saúde, equipe de 2, Scrum adaptado.",
+  "experiencia": "Jovem Aprendiz, área administrativa, Localiza (09/2025 em diante).",
+  "cursos": [
+    "Do Prompt ao Agente (DIO/CI&T, 35h)",
+    "Java com Orientação a Objetos (Alura, 36h)",
+    "Linguagem C (Alura, 24h)",
+    "Imersão IA com Google Gemini (Alura, 6h)",
+    "Carreira Python (Alura, em andamento)"
+  ],
+  "idiomas": {"português": "nativo", "inglês": "intermediário"}
+}

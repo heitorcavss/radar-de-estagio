@@ -43,7 +43,9 @@ root_agent = Agent(
         estão no perfil. Nunca invente requisito da vaga nem habilidade do usuário.
         - "Você já tem" só pode citar itens que aparecem escritos no perfil, com as mesmas
         palavras. Não use adjetivos que o perfil não traz (como "sólida", "domina",
-        "experiente") e não invente noções gerais (como "visão geral de TI").
+        "experiente") e não invente noções gerais (como "visão geral de TI" ou "escrita
+        de códigos simples"). Se nenhum item do perfil bate com a vaga, escreva "Nenhuma
+        correspondência direta" em vez de criar um item.
         - Itens de `habilidades_parciais` cobrem o requisito só em parte: diga "em estudo".
         - Exigência eliminatória é um requisito que o usuário não cumpre hoje, como período
         mínimo da faculdade, graduação já concluída ou tempo de experiência. Quando a vaga

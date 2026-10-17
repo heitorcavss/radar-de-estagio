@@ -1,9 +1,11 @@
 from .filtro import filtrar_vagas
 
+import json
 import os
 import re
 import time
 import unicodedata
+from pathlib import Path
 
 import requests
 
@@ -213,7 +215,7 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
 
     convertidas = [_converter_vaga_serpapi(v) for v in unicas.values()]
     vagas = filtrar_vagas(convertidas)
-    # DEBUG temporário: funil da busca (sem chaves nem texto das vagas)
+    # DEBUG temporário
     print("[funil] buscas:", buscas,
           "| recebidas por busca:", [len(r["resultados"]) for r in sucessos],
           "| únicas:", len(convertidas),
@@ -221,6 +223,31 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
           "| com TI:", sum(v["ti"] for v in convertidas),
           "| passam no filtro:", len(vagas))
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
+
+
+CAMINHO_PERFIL = Path(__file__).parent / "perfil.json"
+
+
+def carregar_perfil() -> dict:
+    """
+    Devolve o perfil do usuário (formação, habilidades, projetos), tirado do currículo.
+
+    Use antes de avaliar a compatibilidade de vagas com o usuário. Não precisa de
+    argumentos e não usa a internet, então pode ser chamada uma vez por conversa.
+
+    Returns:
+        Um dicionário com:
+        - "status": "success" ou "error".
+        - "perfil": os dados do perfil (só quando o status é "success").
+        - "error_message": o motivo, quando o status é "error".
+    """
+    try:
+        with open(CAMINHO_PERFIL, encoding="utf-8") as arquivo:
+            return {"status": "success", "perfil": json.load(arquivo)}
+    except FileNotFoundError:
+        return {"status": "error", "error_message": "O arquivo perfil.json não foi encontrado."}
+    except json.JSONDecodeError:
+        return {"status": "error", "error_message": "O arquivo perfil.json está com formato inválido."}
 
 
 if __name__ == "__main__":

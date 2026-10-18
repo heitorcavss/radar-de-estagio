@@ -32,7 +32,7 @@ TERMOS_TI_TITULO = ["ti", "tecnologia", "software", "dados", "desenvolvedor", "d
                     "analytics", "infraestrutura", "redes", "suporte tecnico", "banco de dados"]
 # Nomes de curso ("ciência da computação", "engenharia de software") ficam de fora: anúncios de
 # qualquer área listam quem pode se candidatar, e isso deixou passar uma vaga de vendas (Auvo).
-TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "sql", "tecnologia da informacao",
+TERMOS_TI_DESCRICAO = ["programacao", "python", "java", "javascript", "sql", "tecnologia da informacao",
                        "desenvolvimento de software", "analise de sistemas", "banco de dados",
                        "ciencia de dados", "engenharia de dados", "machine learning"]
 
@@ -67,10 +67,11 @@ PALAVRAS_SOBRE_EMPRESA = ["empresa", "somos", "temos", "nossa", "our ", "we ", "
 
 
 def _exige_experiencia(titulo: str, descricao: str) -> bool:
-    """True se o título diz pleno/sênior ou a descrição pede ANOS_MINIMOS_EXPERIENCIA ou mais
-    anos de experiência. Meses e "experiência" sem número não contam."""
+    """True se o título diz pleno/sênior/auxiliar/aprendiz ou a descrição pede
+    ANOS_MINIMOS_EXPERIENCIA ou mais anos de experiência. Meses e "experiência" sem número
+    não contam."""
     titulo = _sem_acento(titulo)
-    if any(_tem_palavra(p, titulo) for p in ("senior", "pleno", "sr")):
+    if any(_tem_palavra(p, titulo) for p in ("senior", "pleno", "sr", "auxiliar", "aprendiz")):
         return True
     descricao = _sem_acento(descricao)
     for padrao in PADROES_EXPERIENCIA:
@@ -245,13 +246,6 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
 
     convertidas = [_converter_vaga_serpapi(v) for v in unicas.values()]
     vagas = filtrar_vagas(convertidas)
-    # DEBUG temporário
-    print("[funil] buscas:", buscas,
-          "| recebidas por busca:", [len(r["resultados"]) for r in sucessos],
-          "| únicas:", len(convertidas),
-          "| estágio:", sum(v["estagio"] for v in convertidas),
-          "| com TI:", sum(v["ti"] for v in convertidas),
-          "| passam no filtro:", len(vagas))
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
 

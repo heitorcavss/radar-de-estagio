@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Radar de Estágio: agente de IA que encontra e avalia vagas de estágio em TI">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1f2a"/>
+      <stop offset="1" stop-color="#0f3b3a"/>
+    </linearGradient>
+    <linearGradient id="varredura" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34d399" stop-opacity="0"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="300" rx="20" fill="url(#fundo)"/>
+
+  <!-- radar -->
+  <g transform="translate(980 150)" fill="none" stroke="#34d399">
+    <circle r="120" stroke-opacity="0.25" stroke-width="2"/>
+    <circle r="85" stroke-opacity="0.3" stroke-width="2"/>
+    <circle r="50" stroke-opacity="0.35" stroke-width="2"/>
+    <line x1="-120" y1="0" x2="120" y2="0" stroke-opacity="0.2" stroke-width="1.5"/>
+    <line x1="0" y1="-120" x2="0" y2="120" stroke-opacity="0.2" stroke-width="1.5"/>
+    <path d="M0 0 L120 0 A120 120 0 0 0 85 -85 Z" fill="url(#varredura)" stroke="none">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="6s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="62" cy="-48" r="7" fill="#34d399" stroke="none"/>
+    <circle cx="-40" cy="70" r="6" fill="#fbbf24" stroke="none"/>
+    <circle cx="-78" cy="-30" r="5" fill="#34d399" stroke="none" fill-opacity="0.7"/>
+    <circle r="5" fill="#34d399" stroke="none"/>
+  </g>
+
+  <!-- texto -->
+  <g font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <text x="70" y="128" font-size="64" font-weight="700" fill="#ecfdf5">Radar de Estágio</text>
+    <text x="72" y="178" font-size="26" fill="#a7f3d0">Agente de IA que encontra e avalia vagas de estágio em TI</text>
+    <text x="72" y="232" font-size="20" fill="#6ee7b7" fill-opacity="0.85">Python · Google ADK · Gemini · Google Jobs</text>
+  </g>
+</svg>

@@ -36,8 +36,10 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Git (aprendizado):** reescrevi as mensagens de commits da branch (ainda não enviada) com `git filter-branch --msg-filter`
   para tirar uma linha `Co-Authored-By`. Só é seguro antes do `push`, porque muda o hash de todos os commits. Conferi com
   `git diff <backup> HEAD` que o conteúdo ficou idêntico, e só então apaguei a branch de backup.
-- **Pendências:** tirar o `print` `[funil]` do `buscar_vagas`; barrar "Auxiliar/Aprendiz" por título; decidir se JavaScript
-  entra nos termos de TI; salvar resultados em banco; conferir se a resposta do agente foi cortada na vaga 13 da pergunta 1
+- **Feito em 18/10/2026 (direto na `main`):** tirei o `print` `[funil]`; "auxiliar" e "aprendiz" no título agora barram
+  a vaga (junto com pleno/sênior, em `_exige_experiencia`); `javascript` entrou nos termos de TI da descrição (`java`
+  não casa com `javascript` porque a busca é por palavra inteira, então precisou de termo próprio).
+- **Pendências:** calcular a nota em código (hoje o modelo dá a nota); salvar resultados em banco; conferir se a resposta do agente foi cortada na vaga 13 da pergunta 1
   (pode ter sido só a cópia); a vaga Strider foi barrada por experiência e eu não li o texto para confirmar.
 
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)

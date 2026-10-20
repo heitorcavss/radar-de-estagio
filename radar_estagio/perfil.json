@@ -8,7 +8,8 @@
   "formacao": {
     "curso": "Engenharia de Software",
     "instituicao": "Instituto Federal de Goiás (IFG)",
-    "periodo": "2025 a 2029/1 (previsão)"
+    "periodo": "2025 a 2029/1 (previsão)",
+    "periodo_atual": 4
   },
   "habilidades": {
     "linguagens": ["Python", "Java", "C", "SQL"],

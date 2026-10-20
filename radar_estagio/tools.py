@@ -246,6 +246,11 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
 
     convertidas = [_converter_vaga_serpapi(v) for v in unicas.values()]
     vagas = filtrar_vagas(convertidas)
+    from .nota import avaliar_vagas  # aqui dentro: o nota.py importa helpers deste arquivo (evita import circular)
+
+    perfil = carregar_perfil()
+    if vagas and perfil["status"] == "success":
+        avaliar_vagas(vagas, perfil["perfil"])  # põe a nota em cada vaga e ordena
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
 

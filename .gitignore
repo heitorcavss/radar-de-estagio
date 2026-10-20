@@ -5,3 +5,5 @@ __pycache__/
 .adk/
 dados_gupy/
 dados_serpapi/
+dados_cache/
+afazerEstudo.md

@@ -42,6 +42,50 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Pendências:** calcular a nota em código (hoje o modelo dá a nota); salvar resultados em banco; conferir se a resposta do agente foi cortada na vaga 13 da pergunta 1
   (pode ter sido só a cópia); a vaga Strider foi barrada por experiência e eu não li o texto para confirmar.
 
+## Nota calculada em código (fases 4 e 5, 19-20/10/2026)
+
+- **Decisão final:** nota por **palavras-chave**, sem modelo e sem cache (`radar_estagio/nota.py`, ~80 linhas). A mesma
+  vaga e o mesmo perfil dão sempre a mesma nota. É o mesmo estilo do `filtro.py`: função simples chamada dentro da
+  `buscar_vagas`, que põe `compatibilidade` em cada vaga e ordena. A `instruction` só manda copiar.
+- **Caminho que abandonei:** o Gemini lia a vaga (temperatura 0, formato
+  fixo) e o código fazia a conta. Funcionou (23 vagas, 1 chamada, 31 s), mas exigiu cache por hash, schema, tratamento
+  de erro e a sessão guardando as vagas: ~180 linhas para uma nota. Concluí que a complexidade não compensava agora.
+  Achados: T=0 não garante o mesmo resultado (o que garantia era o cache); mudando o prompt, as extrações das mesmas
+  23 vagas mudaram; vaga com 1 só requisito coberto tira nota alta. Se um dia a lista de palavras não bastar, o
+  Gemini volta só como reserva para vagas em que ela não achou nada.
+- **Fórmula:** 70% tecnologias (fração das tecnologias citadas que o perfil cobre; "em estudo" vale metade) + 30%
+  área (backend/IA 1,0; dados e cloud/devops 0,6; área não detectada 0,5; título com suporte, help desk, atendimento,
+  vendas ou redes 0). Tetos: exigência eliminatória (período maior que `periodo_atual` do perfil, graduação concluída)
+  = 60; fora do objetivo = 50. Sem nenhuma tecnologia reconhecida, a parte das tecnologias vale 30% e a vaga sai
+  marcada como "pouco confiável" (com 50%, vaga sem informação ficava acima de vaga com 1 de 2 requisitos).
+- **De onde vêm as tecnologias da vaga:** linguagens do detector que já existia (`vaga["linguagens"]`) mais o dicionário
+  `TECNOLOGIAS` (nome no perfil -> como a vaga escreve). "banco de dados" conta como SQL e "lógica de programação" como
+  Python (decisão minha: muitas vagas de TI pedem só isso; efeito: "Estágio de TI" do Água Santa tira 85).
+  **O que não está no dicionário não existe para a nota.** Para ampliar, é só acrescentar uma linha.
+- **Período e graduação:** regex acha "5º período", "3º ao 6º período" e "semestre" na descrição; graduação concluída
+  vem de "graduação concluída" na descrição ou "graduado" no título. `_sem_acento` transforma `º` em `o`, por isso o
+  regex aceita um `o` depois do número.
+- **Import circular:** `tools.py` chamava `nota.py` e `nota.py` importa helpers do `tools.py`. Resolvi importando
+  `avaliar_vagas` dentro da `buscar_vagas`.
+- **Teste (23 vagas salvas, sem API):** Liferay 60 com "Atenção: exige 6º período", Narwal com "Atenção: exige graduação
+  concluída", Equatorial (só pede SQL) 88. Suporte técnico da ALM ficou em 50, o teto da regra.
+- **Teste no `adk web` (20/10/2026, 19 vagas ao vivo) achou 4 erros, corrigidos:**
+  1. "Postgre" (como a Narwal escreve) não casava com PostgreSQL: acrescentei o apelido.
+  2. "SQL Server" contava como SQL e "Bancos de Dados Vetoriais" contava como "banco de dados" genérico (SQL): agora são
+     tecnologias próprias (lacunas). O dicionário vai em ordem e o trecho já contado sai do texto (`re.sub`), então o
+     nome mais específico vem antes do genérico.
+  3. A resposta mostrava "Python" como se a vaga pedisse, mas ela dizia "lógica de programação": os genéricos agora
+     aparecem como `python ("lógica de programação")` (dicionário `GENERICOS`).
+  4. Vaga de suporte técnico com lacuna "machine learning": vinha de uma lista de cursos aceitos ("Superior cursando em
+     ..., Inteligência Artificial e Machine Learning"). Mesmo erro do caso Auvo (nome de curso não é requisito). Agora o
+     trecho depois de "cursando" é descartado quando tem 4 ou mais vírgulas (lista de cursos).
+  Como achei o texto da vaga sem gastar busca: o `adk web` guarda tudo em `radar_estagio/.adk/session.db` (tabela
+  `events`), inclusive a resposta completa das tools.
+- **Em aberto:** vaga que pede 1 só tecnologia coberta tira nota muito alta (Equatorial 88, Neobag 85). A constante
+  `MIN_TECNOLOGIAS` (hoje 2) divide as tecnologias por `max(citadas, MIN)`. Simulado nas 19 vagas: com 2, Equatorial 53 e
+  Neobag 50; com 3, Equatorial 41, Neobag 38 e Água Santa 62. Escolhido: 2.
+- **Falta:** reiniciar o `adk web` e testar de novo com o código corrigido.
+
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
 
 **As seções do Adzuna mais abaixo são histórico** (o código do Adzuna foi removido; está no commit `211a37e`).
@@ -145,7 +189,13 @@ termos de cibersegurança (com e sem acento) → vaga 17.
   **Google Jobs via SerpApi** (ver a seção no topo). `buscar_vagas` busca, converte, filtra (TI, estágio, cidade, área,
   linguagem) e foi testada no `adk web`. Está na `main` do GitHub (`cd4459e`). Commits da troca: `63b17de` (SerpApi),
   `4bd18ab` (`.gitignore`), `cd4459e` (remove o Adzuna, atualiza as notas). O código do Adzuna está em `211a37e`.
-- **Próximo:** fases 4 e 5 (análise com currículo). Ver "Pendências novas" na seção do topo.
+- **Fases 4 e 5: em andamento.** Feito: `perfil.json`, `carregar_perfil` e a análise de compatibilidade na instruction
+  (nota, "Você já tem", lacunas), mesclados na `main` pelo PR #1 (`ac761a7`). Nota calculada em código por palavras-chave (20/10/2026); falta testar no `adk web`.
+- **Fase 10, parte 1: feita (19/10/2026).** README publicado (`72651f4`) com banner (`docs/banner.svg`), badges,
+  diagramas Mermaid e `.env.example`; aviso de "em desenvolvimento" no topo.
+- **Fase 10, parte 2: no fim do projeto.** Atualizar o README com o estado final (tirar o aviso de desenvolvimento,
+  roadmap, exemplo real de resposta no lugar do ilustrativo, seção de decisões a partir deste `NOTAS.md`).
+- **Próximo:** terminar as fases 4 e 5 (nota em código). Fases 3, 6, 7 e 8 ainda não estão descritas aqui.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

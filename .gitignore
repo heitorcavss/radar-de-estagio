@@ -3,7 +3,5 @@
 __pycache__/
 /curriculos
 .adk/
-dados_gupy/
 dados_serpapi/
-dados_cache/
 afazerEstudo.md

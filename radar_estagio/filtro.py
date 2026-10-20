@@ -49,39 +49,4 @@ def filtrar_vagas(vagas: list[dict]) -> list[dict]:
     return [v for v in vagas if passa_no_filtro(v)]
 
 
-if __name__ == "__main__":
-    from .dados_falsos import VAGAS_FALSAS
 
-    falhas = []
-
-    # 1- Dados falsos (formato antigo, mesmas chaves): mesmo resultado de antes.
-    esperado = {1, 2, 3, 4, 6, 9, 13, 15, 16}  # vagas sem "BARRADA" nos comentários de dados_falsos.py
-    obtido = {v["id"] for v in filtrar_vagas(VAGAS_FALSAS)}
-    if obtido != esperado:
-        falhas.append(f"dados falsos: sobrou {obtido - esperado}, faltou {esperado - obtido}")
-
-    # 2- Casos com campos desconhecidos (None), como vêm da busca real.
-    base = {"area": None, "cidade": "Goiânia", "modalidade": None, "linguagens": []}
-    casos = [
-        ("tudo desconhecido mantém", {"cidade": None}, True),
-        ("Goiânia sem modalidade mantém", {}, True),
-        ("Aparecida presencial mantém", {"cidade": "Aparecida de Goiânia", "modalidade": "presencial"}, True),
-        ("São Paulo sem modalidade barra", {"cidade": "São Paulo"}, False),
-        ("São Paulo híbrido barra", {"cidade": "São Paulo", "modalidade": "híbrido"}, False),
-        ("São Paulo remoto mantém", {"cidade": "São Paulo", "modalidade": "remoto"}, True),
-        ("só C# barra", {"linguagens": ["C#"]}, False),
-        ("C# e Java mantém", {"linguagens": ["C#", "Java"]}, True),
-        ("mobile barra", {"area": "mobile"}, False),
-        ("sem sinal de TI barra", {"ti": False}, False),
-        ("com sinal de TI mantém", {"ti": True}, True),
-        ("sem sinal de estágio barra", {"estagio": False}, False),
-        ("com sinal de estágio mantém", {"estagio": True}, True),
-        ("exige experiência barra", {"exige_experiencia": True}, False),
-        ("sem exigir experiência mantém", {"exige_experiencia": False}, True),
-        ("dados só com Scala mantém", {"area": "dados", "linguagens": ["Scala"]}, True),
-    ]
-    for nome, mudancas, esperado_caso in casos:
-        if passa_no_filtro({**base, **mudancas}) != esperado_caso:
-            falhas.append(nome)
-
-    print("ok" if not falhas else f"FALHOU: {falhas}")

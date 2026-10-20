@@ -117,23 +117,15 @@ Para usar com o seu currículo, edite `radar_estagio/perfil.json` com a sua form
 
 > Cada pergunta sobre vagas gasta de 2 a 4 buscas da SerpApi.
 
-### 🧪 Teste do filtro
-
-O filtro tem testes próprios, que não chamam nenhuma API:
-
-```bash
-python -m radar_estagio.filtro
-```
-
 ## 📁 Estrutura
 
 ```
 radar_estagio/
 ├── agent.py         # o agente: instruções e ferramentas
 ├── tools.py         # buscar_vagas, carregar_perfil e os detectores (TI, estágio, experiência...)
-├── filtro.py        # regras que descartam vagas (com testes no __main__)
+├── filtro.py        # regras que descartam vagas
 ├── perfil.json      # perfil tirado do currículo
-├── dados_falsos.py  # vagas falsas usadas nos testes do filtro
+├── dados_falsos.py  # vagas falsas do começo do projeto (hoje sem uso)
 └── .env.example     # modelo das chaves de API
 docs/banner.svg      # banner deste README
 NOTAS.md             # diário de decisões, bugs encontrados e o que aprendi

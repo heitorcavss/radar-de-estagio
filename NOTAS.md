@@ -268,8 +268,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - **Decisão que mudou o combinado:** cidade fora da base com modalidade desconhecida **barra** (antes: mantinha).
   Sem isso, a busca nacional traria quase só vagas de São Paulo. Se incomodar, é só uma condição no `if`.
 - **`ti` com `.get`:** os dados falsos antigos não têm o campo; sem ele, mantém.
-- **Teste:** `python -m radar_estagio.filtro` roda os dados falsos (mesmo resultado de antes) e 12 casos com `None`.
-  Nas respostas reais salvas: Goiânia 9 de 20 passam; nacional 3 de 20 (as de cidade desconhecida ou remoto).
+- **Resultado nas respostas reais salvas:** Goiânia 9 de 20 passam; nacional 3 de 20 (as de cidade desconhecida ou remoto).
 - **Cuidado:** a busca nacional sem `where` desperdiça cota (a maioria é barrada). Para as remotas, melhor buscar
   com termo de remoto ou só olhar o que sobra depois do filtro.
 
@@ -338,8 +337,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
   o `&` é calculado antes do `not`, então é `not (linguagens & LINGUAGENS_ACEITAS)`: entra no `if` quando a
   interseção está vazia, ou seja, a vaga não tem nenhuma linguagem aceita. `and` seria outra coisa (junta duas
   condições, não compara os conjuntos).
-- **Teste:** `python -m radar_estagio.filtro` imprime `ok` se os ids que passam são {1, 2, 3, 4, 6, 9, 13, 15, 16}.
-  `tools.py` agora usa import relativo, então rodar `python radar_estagio/tools.py` direto não funciona mais;
+- **Import relativo:** `tools.py` agora usa import relativo, então rodar `python radar_estagio/tools.py` direto não funciona mais;
   usar `python -m radar_estagio.tools`.
 - **Limitação:** o filtro é fixo. Se o usuário pedir uma cidade fora de Goiânia, o agente não acha nada, porque essas
   vagas já foram removidas antes da busca. Aceitável para um único usuário com regras fixas.
@@ -373,7 +371,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 - [x] Trocar o exemplo da docstring de `buscar_vagas` por um tema menos "copiável" (agora "ciência de dados").
 - [x] Fase 2: ler a documentação das APIs de vagas (Adzuna, Remotive) e confirmar se cobrem estágio no Brasil.
 - [x] Fase 2: ligar `buscar_vagas` ao Adzuna (duas buscas, junção por `id`, conversão, filtro, docstring nova).
-  O import de `dados_falsos` saiu do `tools.py`; o arquivo fica só para o teste do `filtro.py`.
+  O import de `dados_falsos` saiu do `tools.py`.
 - [x] Fase 2: a busca por termos local foi removida; os termos vão para o `what_or` da API.
 - [x] Fase 2: lista padrão `TERMOS_BUSCA_PADRAO` quando não há tema (feita). Teste no `adk web` (15/10/2026,
   "me mostra vagas de estagio"): **10 vagas, as mesmas de antes** (4 em Goiânia, 6 remotas, com CRO, Planejamento e

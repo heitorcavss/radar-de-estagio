@@ -1,5 +1,5 @@
 from google.adk.agents.llm_agent import Agent
-from .tools import buscar_vagas, carregar_perfil
+from .tools import buscar_vagas, carregar_perfil, listar_vagas_salvas
 
 root_agent = Agent(
     model='gemini-3.5-flash',
@@ -24,6 +24,19 @@ root_agent = Agent(
         - Se o usuário não disser nenhum tema, chame `buscar_vagas` SEM argumentos:
         a própria ferramenta já busca estágios de TI em geral. Não invente termos.
         - Não use a ferramenta para perguntas que não são sobre vagas.
+
+        ## Quando usar `listar_vagas_salvas`
+        - Use quando o usuário quiser rever vagas que já apareceram antes: "o que eu já vi?",
+        "me mostra as que você já encontrou", "quais vagas de backend estão salvas?".
+        Ela não faz busca nova: lê só o que foi salvo em buscas anteriores.
+        - Passe `area` ou `modalidade` só se o usuário pedir esse filtro, com os valores
+        exatos descritos na ferramenta.
+        - Se o usuário quer vagas novas, oportunidades ou "o que tem agora", use `buscar_vagas`,
+        não esta. Se ele pedir as duas coisas, use as duas e diga de onde veio cada lista.
+        - Se `listar_vagas_salvas` voltar vazia, diga que ainda não há vagas salvas com esse
+        filtro e ofereça fazer uma busca nova. Não busque sem ele aceitar.
+        - Apresente as vagas como na próxima seção. Elas não trazem o campo `nova`:
+        não escreva "Nova" nem "Já vista" para elas.
 
         ## Como apresentar os resultados
         - Liste apenas vagas devolvidas pela ferramenta. Nunca invente vagas, empresas,
@@ -74,5 +87,5 @@ root_agent = Agent(
         ## Tom
         - Educado, direto e objetivo. Responda em português.
     """,
-    tools=[buscar_vagas, carregar_perfil]
+    tools=[buscar_vagas, carregar_perfil, listar_vagas_salvas]
 )

@@ -289,6 +289,42 @@ def carregar_perfil() -> dict:
         return {"status": "error", "error_message": "O arquivo perfil.json está com formato inválido."}
 
 
+def listar_vagas_salvas(area: str | None = None, modalidade: str | None = None, limite: int = 20) -> dict:
+    """
+    Lista vagas que JÁ foram encontradas e salvas antes, sem fazer uma busca nova
+    (não gasta busca na internet). Use quando o usuário perguntar o que já foi visto,
+    pedir para rever vagas salvas ou pedir um filtro sobre elas.
+    Não use para procurar vagas novas: isso é `buscar_vagas`.
+
+    Args:
+        area: Filtra pela área da vaga. Use exatamente um destes valores: "backend",
+        "frontend", "mobile", "ia", "dados", "cloud_devops", "ciberseguranca",
+        "suporte_hardware". Omita para não filtrar.
+        modalidade: Use "remoto" para só vagas remotas. Omita para não filtrar.
+        limite: Máximo de vagas devolvidas (padrão 20).
+    Returns:
+        Um dicionário com "status" ("success" ou "error"), "numero_vagas" e "vagas" (as
+        mais recentes primeiro, depois reordenadas pela nota de compatibilidade). Cada vaga
+        tem os mesmos campos da `buscar_vagas`, sem o campo "nova". Se o banco falhar,
+        vem "error_message".
+    """
+    
+    from .banco import consultar_vagas
+    from .nota import avaliar_vagas
+    from sqlalchemy.exc import SQLAlchemyError
+    
+    try:
+        vagas = consultar_vagas(area, modalidade, limite)
+    except SQLAlchemyError:
+        return {"numero_vagas": 0, "vagas": [], "status": "error",
+                "error_message": "Falha ao acessar o banco de vagas salvas."}
+        
+    perfil = carregar_perfil()
+    if vagas and perfil["status"] == "success":
+        avaliar_vagas(vagas, perfil["perfil"])  # põe a nota em cada vaga e ordena
+
+    return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
+
 if __name__ == "__main__":
     # rodar com: python -m radar_estagio.tools  (gasta 4 das 250 buscas do mês na SerpApi)
     from dotenv import load_dotenv

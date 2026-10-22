@@ -1,6 +1,5 @@
 from datetime import datetime
 from pathlib import Path
-
 from sqlalchemy import JSON, Column, DateTime, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -26,3 +25,42 @@ class Vaga(Base):
 
 
 Base.metadata.create_all(engine)
+
+
+def _chave(vaga: dict) -> str:
+    """
+    Gera a chave única para uma vaga com base no título e na empresa.
+    A chave é formada pelo título e pela empresa, sem acentos e em minúsculas.
+    """
+    from .tools import _sem_acento
+    
+    titulo = _sem_acento(vaga.get('titulo') or '')
+    empresa = _sem_acento(vaga.get('empresa') or '')
+    return f"{titulo}_{empresa}"
+
+
+def salvar_vagas(vagas: list[dict]) -> int:
+    """
+    Salva no banco as vagas que ainda não estão lá e devolve quantas eram novas.
+    Se a vaga já existir (mesma chave), não é adicionada novamente.
+    """
+    novas = 0
+    with Session() as session:
+        for vaga in vagas:
+            chave = _chave(vaga)
+            if session.get(Vaga, chave) is None:
+                nova_vaga = Vaga(
+                    chave=chave,
+                    titulo=vaga.get('titulo'),
+                    empresa=vaga.get('empresa'),
+                    cidade=vaga.get('cidade'),
+                    modalidade=vaga.get('modalidade'),
+                    area=vaga.get('area'),
+                    linguagens=vaga.get('linguagens'),
+                    descricao=vaga.get('descricao'),
+                    url=vaga.get('url')
+                )
+                session.add(nova_vaga)
+                session.commit()
+                novas += 1
+    return novas

@@ -54,8 +54,8 @@ Rascunho para virar a seção de decisões do README (fase 10).
   23 vagas mudaram; vaga com 1 só requisito coberto tira nota alta. Se um dia a lista de palavras não bastar, o
   Gemini volta só como reserva para vagas em que ela não achou nada.
 - **Fórmula:** 70% tecnologias (fração das tecnologias citadas que o perfil cobre; "em estudo" vale metade) + 30%
-  área (backend/IA 1,0; dados e cloud/devops 0,6; área não detectada 0,5; título com suporte, help desk, atendimento,
-  vendas ou redes 0). Tetos: exigência eliminatória (período maior que `periodo_atual` do perfil, graduação concluída)
+  área (backend/IA 1,0; dados e cloud/devops 0,6; área não detectada 0,5; título com suporte, help desk, atendimento
+  ou vendas 0; "redes" não é mais penalizada desde 22/10, pois costuma ser complemento em dev). Tetos: exigência eliminatória (período maior que `periodo_atual` do perfil, graduação concluída)
   = 60; fora do objetivo = 50. Sem nenhuma tecnologia reconhecida, a parte das tecnologias vale 30% e a vaga sai
   marcada como "pouco confiável" (com 50%, vaga sem informação ficava acima de vaga com 1 de 2 requisitos).
 - **De onde vêm as tecnologias da vaga:** linguagens do detector que já existia (`vaga["linguagens"]`) mais o dicionário

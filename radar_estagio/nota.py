@@ -18,7 +18,7 @@ PESO_PADRAO = 1
 SEM_REQUISITOS = 0.3  # vaga sem tecnologia reconhecida: pouca informação, parte das tecnologias fica baixa
 PONTOS_AREA = {"backend": 1.0, "ia": 1.0, "dados": 0.6, "cloud_devops": 0.6}
 PONTOS_AREA_DESCONHECIDA = 0.5  # título sem área detectada (ex.: "Estágio em Desenvolvimento")
-FORA_DO_OBJETIVO = ["suporte", "help desk", "helpdesk", "atendimento", "vendas", "redes"]  # palavras do título
+FORA_DO_OBJETIVO = ["suporte", "help desk", "helpdesk", "atendimento", "vendas"]  # palavras do título
 
 # Nome no perfil (sem acento, minúsculo) -> como a vaga escreve. Outras linguagens vêm de vaga["linguagens"].
 # "sql server" vem antes de "sql": o trecho achado sai do texto, então "SQL Server" não conta como "SQL".

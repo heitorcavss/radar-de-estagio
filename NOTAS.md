@@ -92,6 +92,20 @@ Rascunho para virar a seção de decisões do README (fase 10).
   nota a 15-20 vagas e comparamos com a do agente para escolher `MIN_PESO_PEDIDO` e os `PESOS`.
 - **Falta:** reiniciar o `adk web` e testar de novo com o código corrigido.
 
+## Banco de dados (fase 3, 23/10/2026)
+
+- **SQLite + SQLAlchemy** (`radar_estagio/banco.py`, arquivo `radar_estagio/radar_estagio.db`, ignorado pelo Git). MongoDB
+  descartado: o briefing pede SQLAlchemy, o perfil já tem SQL/SQLAlchemy/PostgreSQL e o dado é uma tabela plana. Trocar
+  para PostgreSQL depois só muda a string de conexão.
+- **Tabela `vagas`, sem `id`:** a chave primária é a `chave` (título + empresa, sem acento e minúsculo), a mesma regra que o
+  `buscar_vagas` usa para juntar duplicadas, porque o `job_id` da SerpApi muda de site para site. O banco recusa a
+  segunda cópia. Custos aceitos: título editado vira vaga nova; vagas sem empresa e com o mesmo título colidem.
+  Se entrar uma tabela de candidaturas, dá para voltar a `id` + `chave` única (o banco ainda é descartável).
+- **A nota não é guardada:** é recalculada ao consultar. A conta é determinística (~1,5 ms por vaga), então não há risco
+  de nota velha quando `PESOS`, perfil ou regras mudam. Se um dia precisar filtrar por nota no banco, adiciona a coluna.
+- **Sem coluna `status` por enquanto** (nova/vista/candidatei/descartei): uma coluna a mais, quando precisar.
+- **Cuidado:** o `create_all` roda ao importar o `banco.py`, então importar o arquivo cria o `.db`.
+
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
 
 **As seções do Adzuna mais abaixo são histórico** (o código do Adzuna foi removido; está no commit `211a37e`).

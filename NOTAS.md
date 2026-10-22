@@ -84,6 +84,12 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Em aberto:** vaga que pede 1 só tecnologia coberta tira nota muito alta (Equatorial 88, Neobag 85). A constante
   `MIN_TECNOLOGIAS` (hoje 2) divide as tecnologias por `max(citadas, MIN)`. Simulado nas 19 vagas: com 2, Equatorial 53 e
   Neobag 50; com 3, Equatorial 41, Neobag 38 e Água Santa 62. Escolhido: 2.
+- **22/10/2026: tecnologias com peso.** Python vale 3; FastAPI, LLMs e SQL valem 2; o resto vale 1 (`PESOS` em `nota.py`).
+  A parte das tecnologias passou a ser `(soma dos pesos cobertos) ÷ (soma dos pesos pedidos)`. Com isso o mínimo mudou de
+  unidade: `MIN_TECNOLOGIAS = 2` virou `MIN_PESO_PEDIDO = 4` (peso, não quantidade). Com o mínimo em 2 peso, uma vaga que pede só
+  SQL (peso 2) cobria 100% (Equatorial foi a 88); com 4, Equatorial ficou em 53. Testado nas 23 vagas de `dados_serpapi/`.
+  Com 3 só três vagas mudam, todas para pior (Equatorial 65, Suporte 47, Rosso 38). Fica 4 até o benchmark: o Heitor dá
+  nota a 15-20 vagas e comparamos com a do agente para escolher `MIN_PESO_PEDIDO` e os `PESOS`.
 - **Falta:** reiniciar o `adk web` e testar de novo com o código corrigido.
 
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)

@@ -12,7 +12,9 @@ PESO_AREA = 30
 NOTA_MAX_ELIMINATORIA = 60
 NOTA_MAX_FORA_DO_OBJETIVO = 50
 NOTA_PARCIAL = 0.5  # habilidade "em estudo" cobre metade do requisito
-MIN_TECNOLOGIAS = 2  # a parte das tecnologias divide por max(citadas, isto): subir pesa menos vaga que pede pouca coisa
+MIN_PESO_PEDIDO = 4  # a parte das tecnologias divide por max(soma dos pesos pedidos, isto): subir pesa menos vaga que pede pouca coisa
+PESOS = {"python": 3, "fastapi": 2, "llms": 2, "sql": 2}  # tecnologias do objetivo valem mais; as demais valem PESO_PADRAO
+PESO_PADRAO = 1
 SEM_REQUISITOS = 0.3  # vaga sem tecnologia reconhecida: pouca informação, parte das tecnologias fica baixa
 PONTOS_AREA = {"backend": 1.0, "ia": 1.0, "dados": 0.6, "cloud_devops": 0.6}
 PONTOS_AREA_DESCONHECIDA = 0.5  # título sem área detectada (ex.: "Estágio em Desenvolvimento")
@@ -41,7 +43,7 @@ GENERICOS = {"banco de dados": ("sql", "banco de dados"), "bancos de dados": ("s
 
 
 def calcular_nota(vaga: dict, perfil: dict) -> dict:
-    """70% tecnologias (quantas das pedidas o perfil cobre) + 30% área, com tetos para exigência
+    """70% tecnologias (peso das pedidas que o perfil cobre; Python e IA/backend pesam mais) + 30% área, com tetos para exigência
     eliminatória (período, graduação concluída) e para vaga fora do objetivo (suporte, vendas)."""
     titulo = _sem_acento(vaga["titulo"])
     descricao = _sem_acento(vaga["descricao"])
@@ -71,7 +73,10 @@ def calcular_nota(vaga: dict, perfil: dict) -> dict:
     lacunas = [rotulo for nome, rotulo in achadas.items() if nome not in completas and nome not in parciais]
 
     sem_requisitos = not achadas
-    parte_tecnologias = SEM_REQUISITOS if sem_requisitos else (len(tem) + NOTA_PARCIAL * len(em_estudo)) / max(len(achadas), MIN_TECNOLOGIAS)
+    peso = lambda nome: PESOS.get(nome, PESO_PADRAO)
+    peso_pedido = sum(peso(nome) for nome in achadas)
+    peso_coberto = sum(peso(nome) for nome in achadas if nome in completas) + NOTA_PARCIAL * sum(peso(nome) for nome in achadas if nome in parciais)
+    parte_tecnologias = SEM_REQUISITOS if sem_requisitos else peso_coberto / max(peso_pedido, MIN_PESO_PEDIDO)
     fora_do_objetivo = any(_tem_palavra(p, titulo) for p in FORA_DO_OBJETIVO)
     pontos_area = 0.0 if fora_do_objetivo else PONTOS_AREA.get(vaga["area"], PONTOS_AREA_DESCONHECIDA)
     nota = PESO_TECNOLOGIAS * parte_tecnologias + PESO_AREA * pontos_area

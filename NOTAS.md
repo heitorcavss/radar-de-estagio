@@ -214,12 +214,19 @@ termos de cibersegurança (com e sem acento) → vaga 17.
   linguagem) e foi testada no `adk web`. Está na `main` do GitHub (`cd4459e`). Commits da troca: `63b17de` (SerpApi),
   `4bd18ab` (`.gitignore`), `cd4459e` (remove o Adzuna, atualiza as notas). O código do Adzuna está em `211a37e`.
 - **Fases 4 e 5: em andamento.** Feito: `perfil.json`, `carregar_perfil` e a análise de compatibilidade na instruction
-  (nota, "Você já tem", lacunas), mesclados na `main` pelo PR #1 (`ac761a7`). Nota calculada em código por palavras-chave (20/10/2026); falta testar no `adk web`.
+  (nota, "Você já tem", lacunas), mesclados na `main` pelo PR #1 (`ac761a7`). Nota calculada em código por palavras-chave (20/10/2026), testada no `adk web` com 19 vagas.
 - **Fase 10, parte 1: feita (19/10/2026).** README publicado (`72651f4`) com banner (`docs/banner.svg`), badges,
   diagramas Mermaid e `.env.example`; aviso de "em desenvolvimento" no topo.
 - **Fase 10, parte 2: no fim do projeto.** Atualizar o README com o estado final (tirar o aviso de desenvolvimento,
   roadmap, exemplo real de resposta no lugar do ilustrativo, seção de decisões a partir deste `NOTAS.md`).
-- **Próximo:** terminar as fases 4 e 5 (nota em código). Fases 3, 6, 7 e 8 ainda não estão descritas aqui.
+- **Fase 3: concluída e publicada (23/10/2026).** Banco SQLite com SQLAlchemy (`banco.py`): `salvar_vagas`,
+  `consultar_vagas`, `buscar_vagas` marcando `nova`, e a tool `listar_vagas_salvas` (`1bff847`, `6b61d99`, `1dd3db6`,
+  `7655d99`). Testado no `adk web`: 1ª busca "Nova", 2ª "Já vista", e "o que eu já vi de backend?" lê o banco sem gastar
+  SerpApi. Decisões na seção "Banco de dados (fase 3)".
+- **Nota (22/10/2026):** tecnologias com peso, `redes` sem penalidade (`02dbdf2`, `43f9c99`). `PESOS` e `MIN_PESO_PEDIDO`
+  são palpites até o benchmark (vaga Java/JavaScript "Web Scraping" com nota 90 é um caso para ele).
+- **Próximo:** benchmark (fase 10): o Heitor dá nota a 15-20 vagas e comparamos. Depois, RAG (fase 4) quando o banco
+  estiver mais cheio. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

@@ -32,9 +32,11 @@ flowchart TD
     S --> D["🧹 Remove duplicadas"]
     D --> F{"🚦 Filtro de regras"}
     F -->|não serve| X["❌ Descartada"]
-    F -->|passa| C["🧮 Compatibilidade<br/>feita pelo agente"]
-    P["📄 perfil.json<br/>tirado do currículo"] -->|carregar_perfil| C
-    C --> R(["📊 Vagas ordenadas por nota<br/>Você já tem · Lacunas · Atenção"])
+    F -->|passa| C["🧮 Compatibilidade<br/>calculada em código"]
+    P["📄 perfil.json<br/>tirado do currículo"] --> C
+    C --> B[("🗄️ Banco SQLite<br/>salva e marca nova ou já vista")]
+    B --> R(["📊 Vagas ordenadas por nota<br/>Você já tem · Lacunas · Atenção"])
+    A -->|listar_vagas_salvas| B
 ```
 
 1. **Busca:** o agente transforma o pedido em termos curtos (por exemplo, "dados", "backend") e faz uma busca em Goiânia por termo, mais uma busca de vagas remotas. Sem tema, usa termos gerais de TI.
@@ -47,17 +49,21 @@ flowchart TD
    - é de programação e não usa nenhuma das linguagens que eu sei.
 
    Na dúvida (informação faltando), a vaga fica.
-4. **Compatibilidade:** o agente compara cada vaga com o perfil e mostra
+4. **Compatibilidade (calculada em código, sem modelo):** o programa compara cada vaga com o perfil por palavras-chave, então a mesma vaga sempre recebe a mesma nota. O agente só apresenta o resultado:
    - **nota de 0 a 100**;
    - **Você já tem:** requisitos da vaga que o perfil cobre;
    - **Lacunas:** o que falta;
    - **Atenção:** quando há uma exigência eliminatória (por exemplo, período mínimo da faculdade). Nesse caso a nota fica limitada a 60.
+5. **Banco de dados:** as vagas que passaram no filtro são salvas em um banco SQLite local. Cada vaga volta marcada como **Nova** ou **Já vista**, e a nota não é guardada: é recalculada a cada consulta, com as regras e o perfil atuais.
+6. **Vagas salvas:** a ferramenta `listar_vagas_salvas` deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
 
 ```mermaid
 pie showData title Peso da nota de compatibilidade
     "Tecnologias e conhecimentos pedidos" : 70
     "Área e nível da vaga" : 30
 ```
+
+Dentro dos 70 pontos das tecnologias, as do meu objetivo pesam mais: Python vale 3; FastAPI, LLMs e SQL valem 2; as demais valem 1.
 
 > [!NOTE]
 > O agente **nunca se candidata nem envia nada** em nome do usuário: ele só busca e organiza.
@@ -86,6 +92,7 @@ KvSBOT: Encontrei 4 vagas de dados. Da mais compatível para a menos:
 | Agente | [Google ADK](https://google.github.io/adk-docs/) |
 | Modelo | Gemini |
 | Fonte de vagas | Google Jobs via [SerpApi](https://serpapi.com/) |
+| Banco de dados | SQLite com [SQLAlchemy](https://www.sqlalchemy.org/) |
 | Linguagem | Python 3 |
 
 ## 🚀 Como rodar
@@ -115,15 +122,18 @@ adk web
 
 Para usar com o seu currículo, edite `radar_estagio/perfil.json` com a sua formação, habilidades e projetos.
 
-> Cada pergunta sobre vagas gasta de 2 a 4 buscas da SerpApi.
+> Cada pergunta sobre vagas gasta de 2 a 4 buscas da SerpApi. Ver as vagas já salvas não gasta nenhuma.
+> O banco (`radar_estagio/radar_estagio.db`) é criado sozinho na primeira busca e fica fora do Git.
 
 ## 📁 Estrutura
 
 ```
 radar_estagio/
 ├── agent.py         # o agente: instruções e ferramentas
-├── tools.py         # buscar_vagas, carregar_perfil e os detectores (TI, estágio, experiência...)
+├── tools.py         # buscar_vagas, listar_vagas_salvas, carregar_perfil e os detectores (TI, estágio, experiência...)
 ├── filtro.py        # regras que descartam vagas
+├── nota.py          # nota de compatibilidade, por palavras-chave
+├── banco.py         # banco SQLite: salvar e consultar vagas
 ├── perfil.json      # perfil tirado do currículo
 ├── dados_falsos.py  # vagas falsas do começo do projeto (hoje sem uso)
 └── .env.example     # modelo das chaves de API
@@ -143,8 +153,9 @@ O [NOTAS.md](NOTAS.md) registra o caminho do projeto: por que troquei de fonte d
 - [x] Fonte real: Google Jobs via SerpApi
 - [x] Filtro de regras (TI, estágio, experiência, cidade, linguagem)
 - [x] Perfil do currículo e análise de compatibilidade
-- [ ] Calcular a nota em código (hoje quem dá a nota é o modelo)
-- [ ] Salvar as vagas em um banco de dados
+- [x] Calcular a nota em código (a mesma vaga sempre dá a mesma nota)
+- [x] Salvar as vagas em um banco de dados e marcar nova ou já vista
+- [ ] Avaliar a nota contra as minhas próprias notas em 15 a 20 vagas
 - [ ] Busca por significado (RAG) nas vagas salvas
 - [ ] Testes automatizados com `pytest`
 

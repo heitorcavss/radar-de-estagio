@@ -43,12 +43,14 @@ def salvar_vagas(vagas: list[dict]) -> int:
     """
     Salva no banco as vagas que ainda não estão lá e devolve quantas eram novas.
     Se a vaga já existir (mesma chave), não é adicionada novamente.
+    Põe a chave "nova" em cada vaga: True se entrou agora, False se já estava salva.
     """
     novas = 0
     with Session() as session:
         for vaga in vagas:
             chave = _chave(vaga)
-            if session.get(Vaga, chave) is None:
+            vaga['nova'] = session.get(Vaga, chave) is None
+            if vaga['nova']:
                 nova_vaga = Vaga(
                     chave=chave,
                     titulo=vaga.get('titulo'),

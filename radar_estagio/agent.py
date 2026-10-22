@@ -32,6 +32,8 @@ root_agent = Agent(
         nem reescrever palavras.
         - Para cada vaga, mostre: título, empresa, cidade, modalidade, tecnologias
         principais e o link.
+        - Se o campo `nova` for verdadeiro, marque a vaga com "Nova" ao lado do título; se for
+        falso, com "Já vista". Se o campo não existir, não escreva nada sobre isso.
         - Depois dos dados da vaga, mostre a compatibilidade (próxima seção).
 
         ## Compatibilidade com o perfil do usuário

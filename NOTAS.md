@@ -103,6 +103,10 @@ Rascunho para virar a seção de decisões do README (fase 10).
   Se entrar uma tabela de candidaturas, dá para voltar a `id` + `chave` única (o banco ainda é descartável).
 - **A nota não é guardada:** é recalculada ao consultar. A conta é determinística (~1,5 ms por vaga), então não há risco
   de nota velha quando `PESOS`, perfil ou regras mudam. Se um dia precisar filtrar por nota no banco, adiciona a coluna.
+- **Ligação com o agente:** o `buscar_vagas` chama `salvar_vagas` depois de dar a nota, e cada vaga volta com `nova`
+  (True = entrou agora, False = já estava salva). A ordem continua pela nota. Se o banco falhar (`SQLAlchemyError`), a busca
+  segue e as vagas voltam sem o campo `nova`; o agente só marca "Nova"/"Já vista" quando o campo existe. O import do
+  banco fica dentro da função porque importar o `banco.py` cria o `.db`.
 - **Sem coluna `status` por enquanto** (nova/vista/candidatei/descartei): uma coluna a mais, quando precisar.
 - **Cuidado:** o `create_all` roda ao importar o `banco.py`, então importar o arquivo cria o `.db`.
 

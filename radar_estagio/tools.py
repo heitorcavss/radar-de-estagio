@@ -213,6 +213,9 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
           vazia), cidade (pode ser vazia), modalidade (remoto, híbrido,
           presencial ou vazia), area (pode ser vazia), ti, linguagens,
           descricao e url. Campos vazios significam que não deu para saber.
+          Também traz nota de compatibilidade e "nova": verdadeiro se a vaga
+          ainda não estava salva no banco (falso se já tinha aparecido antes;
+          ausente se o banco falhou).
         - "error_message": só aparece se "status" for "error".
     """
     # validação da entrada
@@ -251,6 +254,13 @@ def buscar_vagas(termos_de_busca: list[str] | None = None) -> dict:
     perfil = carregar_perfil()
     if vagas and perfil["status"] == "success":
         avaliar_vagas(vagas, perfil["perfil"])  # põe a nota em cada vaga e ordena
+    if vagas:
+        from .banco import salvar_vagas  # aqui dentro: importar o banco cria o arquivo .db
+        from sqlalchemy.exc import SQLAlchemyError
+        try:
+            salvar_vagas(vagas)  # põe "nova" em cada vaga
+        except SQLAlchemyError:
+            pass  # o banco não pode derrubar a busca: as vagas voltam sem o campo "nova"
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
 

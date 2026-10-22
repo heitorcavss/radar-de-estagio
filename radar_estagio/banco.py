@@ -64,3 +64,29 @@ def salvar_vagas(vagas: list[dict]) -> int:
                 session.commit()
                 novas += 1
     return novas
+
+def _para_dict(vaga: Vaga) -> dict:
+    """Converte uma instância de Vaga em um dicionário."""
+    return {
+        'titulo': vaga.titulo,
+        'empresa': vaga.empresa,
+        'cidade': vaga.cidade,
+        'modalidade': vaga.modalidade,
+        'area': vaga.area,
+        'linguagens': vaga.linguagens,
+        'descricao': vaga.descricao,
+        'url': vaga.url,
+        'primeira_vez_em': vaga.primeira_vez_em.isoformat()
+    }
+
+def consultar_vagas(area: str | None = None, modalidade: str | None = None, limite: int = 20) -> list[dict]:
+    """Devolve as vagas salvas, da mais recente para a mais antiga, com filtros opcionais."""
+    with Session() as session:
+        query = session.query(Vaga)
+        if area:
+            query = query.filter(Vaga.area == area)
+        if modalidade:
+            query = query.filter(Vaga.modalidade == modalidade)
+        query = query.order_by(Vaga.primeira_vez_em.desc()).limit(limite)
+        vagas = [_para_dict(vaga) for vaga in query.all()]
+        return vagas

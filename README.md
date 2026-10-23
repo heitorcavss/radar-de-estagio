@@ -54,17 +54,23 @@ flowchart TD
    - **Você já tem:** requisitos da vaga que o perfil cobre;
    - **Lacunas:** o que falta;
    - **Atenção:** quando há uma exigência eliminatória (por exemplo, período mínimo da faculdade). Nesse caso a nota fica limitada a 60.
+
+   ```mermaid
+   pie showData title Peso da nota de compatibilidade
+       "Tecnologias e conhecimentos pedidos" : 70
+       "Área e nível da vaga" : 30
+   ```
+
+   Dentro dos 70 pontos das tecnologias, as do meu objetivo pesam mais: Python vale 3; FastAPI, LLMs e SQL valem 2; as demais valem 1.
+
 5. **Banco de dados:** as vagas que passaram no filtro são salvas em um banco SQLite local. Cada vaga volta marcada como **Nova** ou **Já vista**, e a nota não é guardada: é recalculada a cada consulta, com as regras e o perfil atuais.
-6. **Vagas salvas:** a ferramenta `listar_vagas_salvas` deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
-7. **Analisar uma vaga avulsa:** a ferramenta `analisar_vaga` recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Não busca nem salva nada.
 
-```mermaid
-pie showData title Peso da nota de compatibilidade
-    "Tecnologias e conhecimentos pedidos" : 70
-    "Área e nível da vaga" : 30
-```
+### Outras ferramentas
 
-Dentro dos 70 pontos das tecnologias, as do meu objetivo pesam mais: Python vale 3; FastAPI, LLMs e SQL valem 2; as demais valem 1.
+Além da busca, o agente tem duas ferramentas avulsas:
+
+- **`listar_vagas_salvas`:** deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
+- **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Não busca nem salva nada.
 
 > [!NOTE]
 > O agente **nunca se candidata nem envia nada** em nome do usuário: ele só busca e organiza.

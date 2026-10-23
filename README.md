@@ -56,6 +56,7 @@ flowchart TD
    - **Atenção:** quando há uma exigência eliminatória (por exemplo, período mínimo da faculdade). Nesse caso a nota fica limitada a 60.
 5. **Banco de dados:** as vagas que passaram no filtro são salvas em um banco SQLite local. Cada vaga volta marcada como **Nova** ou **Já vista**, e a nota não é guardada: é recalculada a cada consulta, com as regras e o perfil atuais.
 6. **Vagas salvas:** a ferramenta `listar_vagas_salvas` deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
+7. **Analisar uma vaga avulsa:** a ferramenta `analisar_vaga` recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Não busca nem salva nada.
 
 ```mermaid
 pie showData title Peso da nota de compatibilidade
@@ -130,7 +131,7 @@ Para usar com o seu currículo, edite `radar_estagio/perfil.json` com a sua form
 ```
 radar_estagio/
 ├── agent.py         # o agente: instruções e ferramentas
-├── tools.py         # buscar_vagas, listar_vagas_salvas, carregar_perfil e os detectores (TI, estágio, experiência...)
+├── tools.py         # buscar_vagas, listar_vagas_salvas, analisar_vaga, carregar_perfil e os detectores (TI, estágio, experiência...)
 ├── filtro.py        # regras que descartam vagas
 ├── nota.py          # nota de compatibilidade, por palavras-chave
 ├── banco.py         # banco SQLite: salvar e consultar vagas

@@ -225,8 +225,12 @@ termos de cibersegurança (com e sem acento) → vaga 17.
   SerpApi. Decisões na seção "Banco de dados (fase 3)".
 - **Nota (22/10/2026):** tecnologias com peso, `redes` sem penalidade (`02dbdf2`, `43f9c99`). `PESOS` e `MIN_PESO_PEDIDO`
   são palpites até o benchmark (vaga Java/JavaScript "Web Scraping" com nota 90 é um caso para ele).
-- **Próximo:** benchmark (fase 10): o Heitor dá nota a 15-20 vagas e comparamos. Depois, RAG (fase 4) quando o banco
-  estiver mais cheio. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
+- **`analisar_vaga` (fase 5, 23/10/2026):** tool que recebe `titulo` e `descricao` de uma vaga colada na conversa, monta o
+  dicionário com `_detectar_area` e `_detectar_linguagens`, e chama o `calcular_nota` com o perfil. Título obrigatório: sem
+  ele o agente pergunta (decisão por simplicidade). Não busca nem salva. Testada no `adk web`: vaga com título (nota 91,
+  lacuna Kubernetes) e vaga sem título (o agente pediu o título).
+- **Próximo:** RAG (fase 4) quando o banco estiver mais cheio, e a API FastAPI (fase 6). O benchmark (fase 10) fica
+  para o fim do projeto. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

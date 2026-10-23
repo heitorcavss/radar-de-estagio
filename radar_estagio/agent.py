@@ -1,5 +1,5 @@
 from google.adk.agents.llm_agent import Agent
-from .tools import buscar_vagas, carregar_perfil, listar_vagas_salvas
+from .tools import analisar_vaga, buscar_vagas, carregar_perfil, listar_vagas_salvas
 
 root_agent = Agent(
     model='gemini-3.5-flash',
@@ -37,6 +37,13 @@ root_agent = Agent(
         filtro e ofereça fazer uma busca nova. Não busque sem ele aceitar.
         - Apresente as vagas como na próxima seção. Elas não trazem o campo `nova`:
         não escreva "Nova" nem "Já vista" para elas.
+
+        ## Quando usar `analisar_vaga`
+        - Use quando o usuário colar o texto de uma vaga e pedir para avaliá-la ou ver se
+        combina com ele. Ela não busca nem salva nada.
+        - Precisa do título e da descrição. Se o usuário não disser o título, pergunte antes.
+        - Mostre o resultado como em "Compatibilidade com o perfil do usuário": o campo
+        `compatibilidade` tem os mesmos campos. Não calcule nem altere a nota.
 
         ## Como apresentar os resultados
         - Liste apenas vagas devolvidas pela ferramenta. Nunca invente vagas, empresas,
@@ -87,5 +94,5 @@ root_agent = Agent(
         ## Tom
         - Educado, direto e objetivo. Responda em português.
     """,
-    tools=[buscar_vagas, carregar_perfil, listar_vagas_salvas]
+    tools=[buscar_vagas, carregar_perfil, listar_vagas_salvas, analisar_vaga]
 )

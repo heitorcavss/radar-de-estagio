@@ -325,6 +325,36 @@ def listar_vagas_salvas(area: str | None = None, modalidade: str | None = None, 
 
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
+def analisar_vaga(titulo: str, descricao: str) -> dict:
+    """
+    Analisa UMA vaga que o usuário colou na conversa e diz o quanto ela combina com o
+    perfil dele: nota, o que ele já tem, o que está em estudo e as lacunas.
+    Não faz busca na internet e não salva nada. Use quando o usuário trouxer o texto de uma
+    vaga e pedir para avaliá-la. Para procurar vagas, use `buscar_vagas`.
+
+    Args:
+        titulo: O título da vaga, como o usuário informou. Se ele não disse o título,
+        pergunte antes de chamar.
+        descricao: O texto completo da vaga (requisitos, tecnologias, exigências).
+    Returns:
+        Um dicionário com "status" ("success" ou "error"). Em "success", traz
+        "compatibilidade" com os mesmos campos da `buscar_vagas` (nota, voce_ja_tem,
+        em_estudo, lacunas, atencao, sem_requisitos_claros). Em "error", traz "error_message".
+    """
+    from .nota import calcular_nota  # aqui dentro: o nota.py importa helpers deste arquivo (evita import circular)
+
+    if not titulo.strip() or not descricao.strip():
+        return {"status": "error", "error_message": "Preciso do título e da descrição da vaga."}
+
+    perfil = carregar_perfil()
+    if perfil["status"] != "success":
+        return perfil
+
+    vaga = {"titulo": titulo, "descricao": descricao, "area": _detectar_area(titulo),
+            "linguagens": _detectar_linguagens(titulo + " " + descricao)}
+    return {"status": "success", "compatibilidade": calcular_nota(vaga, perfil["perfil"])}
+
+
 if __name__ == "__main__":
     # rodar com: python -m radar_estagio.tools  (gasta 4 das 250 buscas do mês na SerpApi)
     from dotenv import load_dotenv

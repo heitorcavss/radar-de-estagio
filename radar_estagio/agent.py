@@ -44,6 +44,10 @@ root_agent = Agent(
         - Precisa do título e da descrição. Se o usuário não disser o título, pergunte antes.
         - Mostre o resultado como em "Compatibilidade com o perfil do usuário": o campo
         `compatibilidade` tem os mesmos campos. Não calcule nem altere a nota.
+        - Se vier `evidencias`, acrescente "No seu currículo, o mais próximo disso:" com o `texto`
+        de cada item, copiado como veio. São os trechos mais parecidos com a vaga, não prova de
+        que o usuário cumpre o requisito: não escreva "você tem" a partir deles e não mostre a
+        `similaridade`. Se não vier `evidencias`, não diga nada sobre isso.
 
         ## Como apresentar os resultados
         - Liste apenas vagas devolvidas pela ferramenta. Nunca invente vagas, empresas,

@@ -329,7 +329,7 @@ def analisar_vaga(titulo: str, descricao: str) -> dict:
     """
     Analisa UMA vaga que o usuário colou na conversa e diz o quanto ela combina com o
     perfil dele: nota, o que ele já tem, o que está em estudo e as lacunas.
-    Não faz busca na internet e não salva nada. Use quando o usuário trouxer o texto de uma
+    Não busca vagas na internet e não salva nada. Use quando o usuário trouxer o texto de uma
     vaga e pedir para avaliá-la. Para procurar vagas, use `buscar_vagas`.
 
     Args:
@@ -339,8 +339,15 @@ def analisar_vaga(titulo: str, descricao: str) -> dict:
     Returns:
         Um dicionário com "status" ("success" ou "error"). Em "success", traz
         "compatibilidade" com os mesmos campos da `buscar_vagas` (nota, voce_ja_tem,
-        em_estudo, lacunas, atencao, sem_requisitos_claros). Em "error", traz "error_message".
+        em_estudo, lacunas, atencao, sem_requisitos_claros) e, quando a busca no currículo
+        funcionou, "evidencias": os trechos do currículo mais parecidos com a vaga, cada um com
+        "texto" e "similaridade". Sem "evidencias", a busca no currículo falhou, mas a nota vale.
+        Em "error", traz "error_message".
     """
+    from chromadb.errors import ChromaError
+    from google.genai.errors import APIError
+
+    from .curriculo_rag import buscar_evidencias, indexar_perfil  # aqui dentro: importar o chromadb demora
     from .nota import calcular_nota  # aqui dentro: o nota.py importa helpers deste arquivo (evita import circular)
 
     if not titulo.strip() or not descricao.strip():
@@ -352,7 +359,15 @@ def analisar_vaga(titulo: str, descricao: str) -> dict:
 
     vaga = {"titulo": titulo, "descricao": descricao, "area": _detectar_area(titulo),
             "linguagens": _detectar_linguagens(titulo + " " + descricao)}
-    return {"status": "success", "compatibilidade": calcular_nota(vaga, perfil["perfil"])}
+    resultado = {"status": "success", "compatibilidade": calcular_nota(vaga, perfil["perfil"])}
+
+    # se o gem ou o índice falharem, a nota sai do mesmo jeito
+    try:
+        indexar_perfil(perfil["perfil"])  # sem chunk novo não chama o Gemini
+        resultado["evidencias"] = buscar_evidencias(f"{titulo}. {descricao}")
+    except (APIError, ChromaError, ValueError):  # ValueError: sem GOOGLE_API_KEY
+        pass
+    return resultado
 
 
 if __name__ == "__main__":

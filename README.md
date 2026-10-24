@@ -70,7 +70,7 @@ flowchart TD
 Além da busca, o agente tem duas ferramentas avulsas:
 
 - **`listar_vagas_salvas`:** deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
-- **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Não busca nem salva nada.
+- **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Também mostra **os trechos do currículo mais parecidos com a vaga** (busca por significado, com embeddings do Gemini e ChromaDB): é um apoio para a candidatura e não muda a nota. Não busca vagas nem salva nada.
 
 > [!NOTE]
 > O agente **nunca se candidata nem envia nada** em nome do usuário: ele só busca e organiza.
@@ -141,6 +141,7 @@ radar_estagio/
 ├── filtro.py        # regras que descartam vagas
 ├── nota.py          # nota de compatibilidade, por palavras-chave
 ├── banco.py         # banco SQLite: salvar e consultar vagas
+├── curriculo_rag.py # busca no currículo por significado (embeddings do Gemini + ChromaDB)
 ├── perfil.json      # perfil tirado do currículo
 ├── dados_falsos.py  # vagas falsas do começo do projeto (hoje sem uso)
 └── .env.example     # modelo das chaves de API
@@ -163,6 +164,8 @@ O [NOTAS.md](NOTAS.md) registra o caminho do projeto: por que troquei de fonte d
 - [x] Calcular a nota em código (a mesma vaga sempre dá a mesma nota)
 - [x] Salvar as vagas em um banco de dados e marcar nova ou já vista
 - [ ] Avaliar a nota contra as minhas próprias notas em 15 a 20 vagas
+- [x] Busca por significado no currículo (RAG): a `analisar_vaga` mostra os trechos mais próximos da vaga
+- [ ] Refinar essa busca: procurar por requisito da vaga, e não pela descrição inteira (ao final do projeto)
 - [ ] Busca por significado (RAG) nas vagas salvas
 - [ ] Testes automatizados com `pytest`
 

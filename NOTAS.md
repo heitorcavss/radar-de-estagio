@@ -32,7 +32,8 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Pausa de 0,5 s entre buscas (`PAUSA_ENTRE_BUSCAS`):** é só precaução contra *rate limiting* (muitos pedidos colados,
   erro HTTP 429). Nunca vi 429 aqui e não testei sem a pausa. Se um dia aparecer, o certo é *retry com backoff*.
 - **RAG (ideia para depois):** o primeiro uso que faz sentido é busca por significado nas vagas salvas, quando o banco
-  tiver centenas delas. Currículo e projetos não precisam.
+  tiver centenas delas. Currículo e projetos não precisam. (Em 24/10/2026 o RAG no currículo foi feito mesmo assim, como
+  evidência ao lado da nota, e também para aprender: ver "RAG no currículo (fase 4)". O RAG nas vagas salvas segue em aberto.)
 - **Git (aprendizado):** reescrevi as mensagens de commits da branch (ainda não enviada) com `git filter-branch --msg-filter`
   para tirar uma linha `Co-Authored-By`. Só é seguro antes do `push`, porque muda o hash de todos os commits. Conferi com
   `git diff <backup> HEAD` que o conteúdo ficou idêntico, e só então apaguei a branch de backup.
@@ -109,6 +110,46 @@ Rascunho para virar a seção de decisões do README (fase 10).
   banco fica dentro da função porque importar o `banco.py` cria o `.db`.
 - **Sem coluna `status` por enquanto** (nova/vista/candidatei/descartei): uma coluna a mais, quando precisar.
 - **Cuidado:** o `create_all` roda ao importar o `banco.py`, então importar o arquivo cria o `.db`.
+
+## RAG no currículo (fase 4, 24/10/2026)
+
+- **Para que serve:** a `analisar_vaga` mostra, ao lado da nota, os 3 trechos do currículo mais parecidos com a vaga
+  ("onde você usou algo assim"). É **evidência, não decisão**: não muda a nota e o agente não escreve "você tem" a partir
+  deles. As similaridades ficam espremidas (0,65 a 0,80), então não dá para usar um corte fixo; só serve para ordenar.
+- **O que entra no índice:** o `perfil.json` (um só, o que também fecha a dúvida dos dois currículos), em 21 chunks:
+  um por projeto, curso, grupo de habilidades, a pesquisa e a experiência. `objetivo`, `formacao`, `idiomas` e `fonte`
+  ficam de fora: não são evidência de habilidade, e o `objetivo.areas` aparecia em quase toda busca.
+- **Embeddings:** `gemini-embedding-001` (3072 números), com `task_type` `RETRIEVAL_DOCUMENT` nos chunks e
+  `RETRIEVAL_QUERY` no pedido. O `task_type` melhorou a busca (o ruído saiu do topo e os projetos subiram).
+- **ChromaDB** em `radar_estagio/chroma_db/` (fora do Git). O id do chunk é o hash SHA-1 do texto: texto igual não é
+  gerado de novo, texto alterado vira chunk novo e o velho é apagado. A 2ª execução não chama o Gemini para os chunks.
+  `dict.fromkeys` tira chunks repetidos antes, porque o Chroma recusa ids repetidos (já no `get`, não só no `add`).
+- **Cuidado:** se mudar o modelo ou o `task_type` com o texto igual, o id não muda e os vetores velhos ficam: apagar a
+  pasta `chroma_db/`.
+- **A nota nunca depende do RAG:** se o Gemini ou o Chroma falharem (`APIError`, `ChromaError`, `ValueError` de falta de
+  chave), a `analisar_vaga` devolve a nota sem o campo `evidencias`.
+- **Bug que só o teste real achou:** `genai.Client().models.embed_content(...)` numa linha só fecha a conexão antes de a
+  chamada sair (`Cannot send a request, as the client has been closed`). O cliente precisa ficar numa variável. O teste
+  com embeddings falsos não pegava isso.
+- **Dependências:** o `chromadb` subiu o `opentelemetry-*` para 1.45.1, mas o `google-adk 2.11.0` exige até 1.42.1. Voltei
+  `api`, `sdk`, `semantic-conventions` e os exportadores `otlp` para 1.42.1 e tirei o `opentelemetry-exporter-otlp-common`
+  (órfão). `pip check` limpo e `adk web` testado depois.
+- **Como foi feito:** primeiro dois scripts de estudo (`experimento_embedding.py` e `experimento_rag.py`, só no disco, fora
+  do Git), depois o módulo. A ordem ajudou: cada pedaço rodou e deu para ver o resultado antes do próximo.
+
+## Refinos para o final
+
+Coisas que ficam para uma passada de refino, depois das fases principais:
+
+- [ ] **Busca por requisito (pedido pelo Heitor, 24/10/2026):** hoje a `analisar_vaga` pesquisa com o título + a descrição
+  inteira, o que dilui o resultado. No teste, o ESL ("API de terceiros") nem apareceu e o projeto Radar entrou como 3º.
+  Ideia: separar os requisitos da vaga e buscar por cada um; ou pesquisar só a parte de requisitos.
+- [ ] **"Em estudo:" e "Lacunas:" vazios na resposta do agente:** a instrução manda mostrar "Em estudo" só se não estiver
+  vazio, mas o modelo escreveu o rótulo sem nada. Reforçar a instrução ou montar o texto em código.
+- [ ] **Chunks de uma palavra só** (`habilidades_parciais: Django`, `NLP`, `LLMs`): juntar em um chunk
+  ("Habilidades em estudo: ...") se atrapalharem a busca.
+- [ ] **Tirar um teste de verdade do `curriculo_rag`:** os testes foram rodados no terminal e nenhum ficou no repo.
+- [ ] **Benchmark (fase 10):** dar nota a 15-20 vagas e comparar com a do agente.
 
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
 
@@ -211,8 +252,8 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 | 1 | `buscar_vagas` com dados falsos | feita |
 | 2 | API real (SerpApi) e filtro | feita |
 | 3 | Banco de dados (SQLAlchemy) | feita |
-| 4 | Currículo em chunks e embeddings (RAG) | **não feita** (pulada de propósito; fica para quando o banco estiver mais cheio) |
-| 5 | Nota de compatibilidade e lacunas | feita **sem** RAG: nota em código e a tool `analisar_vaga` |
+| 4 | Currículo em chunks e embeddings (RAG) | feita (24/10/2026): `curriculo_rag.py`, ligada à `analisar_vaga`; o refino da busca fica para o final |
+| 5 | Nota de compatibilidade e lacunas | feita: nota em código e a tool `analisar_vaga` (com as evidências da fase 4) |
 | 6 | API FastAPI | não começou |
 | 7 | Servidor MCP | não começou |
 | 8 | Vaga por print (multimodal) | não começou |
@@ -244,7 +285,9 @@ Detalhes de cada fase, em ordem:
   diagramas Mermaid e `.env.example`; aviso de "em desenvolvimento" no topo.
 - **Fase 10, parte 2: no fim do projeto.** Atualizar o README com o estado final (tirar o aviso de desenvolvimento,
   roadmap, exemplo real de resposta no lugar do ilustrativo, seção de decisões a partir deste `NOTAS.md`).
-- **Próximo:** RAG (fase 4) quando o banco estiver mais cheio, e a API FastAPI (fase 6). O benchmark (fase 10) fica
+- **Fase 4: feita (24/10/2026).** RAG no currículo: `curriculo_rag.py` (`1d44dcd` dependências, `5dd57d3` módulo,
+  `f149b40` ligado à `analisar_vaga`). Decisões e aprendizados na seção "RAG no currículo (fase 4)".
+- **Próximo:** a API FastAPI (fase 6). O benchmark (fase 10) e os refinos da seção "Refinos para o final" ficam
   para o fim do projeto. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
@@ -439,7 +482,8 @@ Detalhes de cada fase, em ordem:
 - [x] Orientar o modelo (docstring e `instruction`) a usar sinônimos diretos do tema, sem termos genéricos de TI.
 - [x] Fase 2: restringir o `try/except` só à chamada externa e capturar exceções específicas (`_chamar_adzuna`).
   O `except Exception` antigo saiu junto com a busca local.
-- [ ] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar.
+- [x] Fase 4: decidir como usar os dois currículos (IA e dev): comparar com os dois ou unificar. Resolvido: o RAG usa só o
+  `perfil.json`.
 - [ ] Ideia: `require_confirmation` do ADK (experimental) se algum dia houver uma tool que aja no mundo.
 - [ ] Ideia: normalizar acentos na busca, para não depender de o modelo mandar as duas grafias.
 

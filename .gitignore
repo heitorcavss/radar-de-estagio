@@ -6,3 +6,4 @@ __pycache__/
 dados_serpapi/
 afazerEstudo.md
 radar_estagio/radar_estagio.db
+radar_estagio/chroma_db/

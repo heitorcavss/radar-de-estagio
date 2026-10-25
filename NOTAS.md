@@ -254,7 +254,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 | 3 | Banco de dados (SQLAlchemy) | feita |
 | 4 | Currículo em chunks e embeddings (RAG) | feita (24/10/2026): `curriculo_rag.py`, ligada à `analisar_vaga`; o refino da busca fica para o final |
 | 5 | Nota de compatibilidade e lacunas | feita: nota em código e a tool `analisar_vaga` (com as evidências da fase 4) |
-| 6 | API FastAPI | não começou |
+| 6 | API FastAPI | **adiada** (25/10/2026): só se houver deploy ou interface própria. O uso é pessoal, pelo `adk web`, e o FastAPI já está em 2 projetos dele |
 | 7 | Servidor MCP | não começou |
 | 8 | Vaga por print (multimodal) | não começou |
 | 9 | Multiagente | não começou |
@@ -287,8 +287,11 @@ Detalhes de cada fase, em ordem:
   roadmap, exemplo real de resposta no lugar do ilustrativo, seção de decisões a partir deste `NOTAS.md`).
 - **Fase 4: feita (24/10/2026).** RAG no currículo: `curriculo_rag.py` (`1d44dcd` dependências, `5dd57d3` módulo,
   `f149b40` ligado à `analisar_vaga`). Decisões e aprendizados na seção "RAG no currículo (fase 4)".
-- **Próximo:** a API FastAPI (fase 6). O benchmark (fase 10) e os refinos da seção "Refinos para o final" ficam
-  para o fim do projeto. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
+- **Fase 6 adiada (25/10/2026):** o plano de 10 fases foi um ponto de partida, não uma exigência. Uma API HTTP só serve
+  se algo fora do `adk web` precisar chamar o radar (tela própria, outro programa, deploy), e hoje nada disso existe.
+  Se um dia houver deploy, entra uma versão fina (2 ou 3 endpoints) em cima do que já existe.
+- **Próximo:** fase 7 (servidor MCP), depois a 8 (vaga por print). O benchmark (fase 10) e os refinos da seção
+  "Refinos para o final" ficam para o fim do projeto. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

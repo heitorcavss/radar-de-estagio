@@ -1,5 +1,22 @@
+import sys
+from pathlib import Path
+
 from google.adk.agents.llm_agent import Agent
-from .tools import analisar_vaga, buscar_vagas, carregar_perfil, listar_vagas_salvas
+from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams
+from mcp import StdioServerParameters
+
+# as tools (buscar_vagas, listar_vagas_salvas, analisar_vaga, carregar_perfil) vêm do servidor MCP do radar,
+# que o ADK liga como um processo à parte e do qual descobre as tools sozinho
+ferramentas_do_radar = McpToolset(
+    connection_params=StdioConnectionParams(
+        server_params=StdioServerParameters(
+            command=sys.executable,  # o mesmo Python (do venv) que está rodando o agente
+            args=["-m", "radar_estagio.mcp_server"],
+            cwd=str(Path(__file__).parent.parent),  # a raiz do projeto, de onde o `-m radar_estagio...` funciona
+        ),
+        timeout=30,
+    )
+)
 
 root_agent = Agent(
     model='gemini-3.5-flash',
@@ -98,5 +115,5 @@ root_agent = Agent(
         ## Tom
         - Educado, direto e objetivo. Responda em português.
     """,
-    tools=[buscar_vagas, carregar_perfil, listar_vagas_salvas, analisar_vaga]
+    tools=[ferramentas_do_radar]
 )

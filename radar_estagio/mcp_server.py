@@ -9,12 +9,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from mcp.server.mcpserver import MCPServer
 
-from .tools import analisar_vaga, buscar_vagas, listar_vagas_salvas
+from .tools import analisar_vaga, buscar_vagas, carregar_perfil, listar_vagas_salvas
 
 load_dotenv(Path(__file__).parent / ".env")  # o servidor é outro processo: o ADK não carrega as chaves (Gemini, SerpApi) para ele
 
 servidor = MCPServer("radar-de-estagio")
-for tool in (buscar_vagas, listar_vagas_salvas, analisar_vaga):
+for tool in (buscar_vagas, listar_vagas_salvas, analisar_vaga, carregar_perfil):
     servidor.add_tool(tool)  # o nome, a docstring e os tipos da função viram a descrição da tool
 
 if __name__ == "__main__":

@@ -153,10 +153,15 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Chaves:** o servidor é outro processo, então ele mesmo faz `load_dotenv` do `radar_estagio/.env` (Gemini e SerpApi).
 - **O agente liga o servidor** com `StdioServerParameters` (o comando `python -m radar_estagio.mcp_server`, com
   `sys.executable` e `cwd` na raiz) dentro de `StdioConnectionParams` (timeout 30 s) dentro do `McpToolset`.
+- **Quando o servidor nasce:** só na primeira mensagem, nunca ao subir o `adk web`, abrir a página, pedir o grafo ou criar
+  a sessão (conferi olhando os processos). O `McpToolset(...)` do `agent.py` só guarda a receita; a cada mensagem o ADK
+  monta o pedido ao Gemini com a lista de tools, e pedir a lista ao `McpToolset` (`get_tools`) conecta, o que executa o
+  comando e cria o processo (`stdio_client`, no `mcp_session_manager.py` do ADK). Ao encerrar o `adk web`, o servidor
+  encerra junto. Não achei a linha exata do ADK que dispara isso no começo da mensagem: o gatilho foi observado, não lido.
 - **Testado:** cliente MCP de teste (lista as tools e chama `analisar_vaga` e `listar_vagas_salvas`) e `adk web` (o agente
-  chamou `listar_vagas_salvas` e `analisar_vaga` pelo servidor). Nenhum processo do servidor sobrou depois.
-- **Não testado: `buscar_vagas` pelo agente** (gasta ~4 buscas da SerpApi). Só conferi que está registrada, com o
-  parâmetro opcional certo.
+  chamou `listar_vagas_salvas`, `analisar_vaga` e `buscar_vagas` pelo servidor). Nenhum processo do servidor sobrou depois.
+- **`buscar_vagas` pelo agente (26/10/2026):** "tem estágio de backend?" chamou `buscar_vagas` com 3 termos e voltaram 4
+  vagas (1 "Já vista", 3 "Nova"); o banco foi de 3 para 6. Gastou até 4 buscas da SerpApi.
 - **Ganho de verdade:** para uso pessoal com um agente só, o MCP não muda a função (o agente já chamava as funções
   direto). O valor é outros hosts usarem o radar (ex.: Claude Desktop), vários agentes dividirem as tools (fase 9) e saber
   construir um servidor. Religar o agente foi escolha dele, para aprender o client do ADK.
@@ -173,8 +178,7 @@ Coisas que ficam para uma passada de refino, depois das fases principais:
 - [ ] **Chunks de uma palavra só** (`habilidades_parciais: Django`, `NLP`, `LLMs`): juntar em um chunk
   ("Habilidades em estudo: ...") se atrapalharem a busca.
 - [ ] **Tirar um teste de verdade do `curriculo_rag`:** os testes foram rodados no terminal e nenhum ficou no repo.
-- [ ] **Testar a `buscar_vagas` pelo agente com o servidor MCP** (uma busca real, gasta SerpApi) e, se quiser, a demonstração
-  com o Claude Desktop como host.
+- [ ] **Demonstração do servidor MCP com o Claude Desktop como host** (opcional).
 - [ ] **Benchmark (fase 10):** dar nota a 15-20 vagas e comparar com a do agente.
 
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)

@@ -72,6 +72,14 @@ Além da busca, o agente tem duas ferramentas avulsas:
 - **`listar_vagas_salvas`:** deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
 - **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Também mostra **os trechos do currículo mais parecidos com a vaga** (busca por significado, com embeddings do Gemini e ChromaDB): é um apoio para a candidatura e não muda a nota. Não busca vagas nem salva nada.
 
+### Servidor MCP
+
+As ferramentas (`buscar_vagas`, `listar_vagas_salvas`, `analisar_vaga` e `carregar_perfil`) ficam em um **servidor MCP** (`radar_estagio/mcp_server.py`). O agente do ADK liga o servidor como um processo à parte e descobre as ferramentas por ele, em vez de importá-las. As funções continuam em `tools.py`; o servidor só as oferece pelo protocolo. Com isso, qualquer cliente MCP (por exemplo, o Claude Desktop) pode usar o radar, e não só o `adk web`.
+
+```bash
+python -m radar_estagio.mcp_server   # fala por stdio: quem conecta é o cliente MCP, não dá para usar direto no terminal
+```
+
 > [!NOTE]
 > O agente **nunca se candidata nem envia nada** em nome do usuário: ele só busca e organiza.
 
@@ -142,6 +150,7 @@ radar_estagio/
 ├── nota.py          # nota de compatibilidade, por palavras-chave
 ├── banco.py         # banco SQLite: salvar e consultar vagas
 ├── curriculo_rag.py # busca no currículo por significado (embeddings do Gemini + ChromaDB)
+├── mcp_server.py    # servidor MCP: oferece as ferramentas do radar a qualquer cliente MCP
 ├── perfil.json      # perfil tirado do currículo
 ├── dados_falsos.py  # vagas falsas do começo do projeto (hoje sem uso)
 └── .env.example     # modelo das chaves de API
@@ -165,7 +174,8 @@ O [NOTAS.md](NOTAS.md) registra o caminho do projeto: por que troquei de fonte d
 - [x] Salvar as vagas em um banco de dados e marcar nova ou já vista
 - [ ] Avaliar a nota contra as minhas próprias notas em 15 a 20 vagas
 - [x] Busca por significado no currículo (RAG): a `analisar_vaga` mostra os trechos mais próximos da vaga
-- [ ] Refinar essa busca: procurar por requisito da vaga, e não pela descrição inteira (ao final do projeto)
+- [x] Servidor MCP: as ferramentas ficam em um servidor e o agente as usa por ele
+- [ ] Refinar a busca no currículo: procurar por requisito da vaga, e não pela descrição inteira (ao final do projeto)
 - [ ] Busca por significado (RAG) nas vagas salvas
 - [ ] Testes automatizados com `pytest`
 

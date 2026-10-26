@@ -137,6 +137,30 @@ Rascunho para virar a seção de decisões do README (fase 10).
 - **Como foi feito:** primeiro dois scripts de estudo (`experimento_embedding.py` e `experimento_rag.py`, só no disco, fora
   do Git), depois o módulo. A ordem ajudou: cada pedaço rodou e deu para ver o resultado antes do próximo.
 
+## Servidor MCP (fase 7, 25-26/10/2026)
+
+- **Papéis:** o **server** é o nosso `mcp_server.py` (oferece as 4 tools); o **host** é o agente rodando no ADK; o
+  **client** é o `McpToolset` do ADK, o conector dentro do host. O agente só usa o servidor próprio, nada de terceiros.
+- **As funções ficaram em `tools.py`:** o servidor as importa e registra com `add_tool`. O nome, a docstring e os tipos
+  de cada função viram a descrição da tool, por isso as docstrings valem.
+- **O servidor não tem memória:** a lista de tools é montada na memória a cada partida, pelo `add_tool` do código. A tool
+  "sempre está lá" porque a linha está no arquivo, não porque algo foi guardado. O que persiste são arquivos (banco,
+  índice do Chroma). No `stdio` quem conecta inicia o servidor como processo filho e o encerra no fim.
+- **SDK `mcp` 2.3.0:** o `FastMCP` dos exemplos (`mcp.server.fastmcp`) não existe mais; a classe é `MCPServer`
+  (`mcp.server.mcpserver`). Os campos do cliente são em `snake_case` (`input_schema`). Conferi no código instalado, não
+  na documentação. O ADK 2.11 provavelmente foi feito pensando no SDK 1.x: funcionou, mas vale ficar de olho.
+- **`stdio`: nada nas tools pode dar `print`** (a saída do processo é o protocolo). Logs saem pelo `stderr`.
+- **Chaves:** o servidor é outro processo, então ele mesmo faz `load_dotenv` do `radar_estagio/.env` (Gemini e SerpApi).
+- **O agente liga o servidor** com `StdioServerParameters` (o comando `python -m radar_estagio.mcp_server`, com
+  `sys.executable` e `cwd` na raiz) dentro de `StdioConnectionParams` (timeout 30 s) dentro do `McpToolset`.
+- **Testado:** cliente MCP de teste (lista as tools e chama `analisar_vaga` e `listar_vagas_salvas`) e `adk web` (o agente
+  chamou `listar_vagas_salvas` e `analisar_vaga` pelo servidor). Nenhum processo do servidor sobrou depois.
+- **Não testado: `buscar_vagas` pelo agente** (gasta ~4 buscas da SerpApi). Só conferi que está registrada, com o
+  parâmetro opcional certo.
+- **Ganho de verdade:** para uso pessoal com um agente só, o MCP não muda a função (o agente já chamava as funções
+  direto). O valor é outros hosts usarem o radar (ex.: Claude Desktop), vários agentes dividirem as tools (fase 9) e saber
+  construir um servidor. Religar o agente foi escolha dele, para aprender o client do ADK.
+
 ## Refinos para o final
 
 Coisas que ficam para uma passada de refino, depois das fases principais:
@@ -149,6 +173,8 @@ Coisas que ficam para uma passada de refino, depois das fases principais:
 - [ ] **Chunks de uma palavra só** (`habilidades_parciais: Django`, `NLP`, `LLMs`): juntar em um chunk
   ("Habilidades em estudo: ...") se atrapalharem a busca.
 - [ ] **Tirar um teste de verdade do `curriculo_rag`:** os testes foram rodados no terminal e nenhum ficou no repo.
+- [ ] **Testar a `buscar_vagas` pelo agente com o servidor MCP** (uma busca real, gasta SerpApi) e, se quiser, a demonstração
+  com o Claude Desktop como host.
 - [ ] **Benchmark (fase 10):** dar nota a 15-20 vagas e comparar com a do agente.
 
 ## Fonte atual: Google Jobs via SerpApi (troca feita em 16/10/2026)
@@ -255,7 +281,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 | 4 | Currículo em chunks e embeddings (RAG) | feita (24/10/2026): `curriculo_rag.py`, ligada à `analisar_vaga`; o refino da busca fica para o final |
 | 5 | Nota de compatibilidade e lacunas | feita: nota em código e a tool `analisar_vaga` (com as evidências da fase 4) |
 | 6 | API FastAPI | **adiada** (25/10/2026): só se houver deploy ou interface própria. O uso é pessoal, pelo `adk web`, e o FastAPI já está em 2 projetos dele |
-| 7 | Servidor MCP | não começou |
+| 7 | Servidor MCP | feita (25-26/10/2026): `mcp_server.py` e o agente ligado a ele; falta só a demonstração com o Claude Desktop (opcional) |
 | 8 | Vaga por print (multimodal) | não começou |
 | 9 | Multiagente | não começou |
 | 10 | Benchmark, README final, demo e deploy | README parte 1 feita; benchmark e o resto ficam para o fim |
@@ -290,8 +316,10 @@ Detalhes de cada fase, em ordem:
 - **Fase 6 adiada (25/10/2026):** o plano de 10 fases foi um ponto de partida, não uma exigência. Uma API HTTP só serve
   se algo fora do `adk web` precisar chamar o radar (tela própria, outro programa, deploy), e hoje nada disso existe.
   Se um dia houver deploy, entra uma versão fina (2 ou 3 endpoints) em cima do que já existe.
-- **Próximo:** fase 7 (servidor MCP), depois a 8 (vaga por print). O benchmark (fase 10) e os refinos da seção
-  "Refinos para o final" ficam para o fim do projeto. Fases 6, 7 e 8 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
+- **Fase 7: feita (25-26/10/2026).** Servidor MCP em `mcp_server.py` (`26c729e` dependência, `65a05ae` e `b7b3e8b` o
+  servidor, `9d09d99` o agente ligado a ele). Decisões na seção "Servidor MCP (fase 7)".
+- **Próximo:** fase 8 (vaga por print). O benchmark (fase 10) e os refinos da seção "Refinos para o final" ficam para
+  o fim do projeto. As fases 8 e 9 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

@@ -32,7 +32,9 @@ TECNOLOGIAS = {
     "docker": ["docker"], "git": ["git"], "github": ["github"], "linux": ["linux"],
     "kubernetes": ["kubernetes"], "aws": ["aws"], "azure": ["azure"], "ci/cd": ["ci/cd"],
     "spring": ["spring"], "react": ["react", "reactjs"], "html": ["html"], "css": ["css"],
-    "llms": ["llm", "llms"], "nlp": ["nlp"], "machine learning": ["machine learning"],
+    "llms": ["llm", "llms", "modelos de linguagem", "modelo de linguagem", "large language model", "large language models"],
+    "nlp": ["nlp"], "machine learning": ["machine learning"],
+    "playwright": ["playwright"], "beautifulsoup": ["beautifulsoup", "beautiful soup", "bs4"], "rpa": ["rpa"],
     "pandas": ["pandas"], "numpy": ["numpy"], "pytorch": ["pytorch"], "tensorflow": ["tensorflow"],
     "power bi": ["power bi"], "excel": ["excel"],
 }

@@ -56,9 +56,15 @@ root_agent = Agent(
         não escreva "Nova" nem "Já vista" para elas.
 
         ## Quando usar `analisar_vaga`
-        - Use quando o usuário colar o texto de uma vaga e pedir para avaliá-la ou ver se
-        combina com ele. Ela não busca nem salva nada.
-        - Precisa do título e da descrição. Se o usuário não disser o título, pergunte antes.
+        - Use quando o usuário colar o texto de uma vaga, ou mandar um print (imagem) dela, e
+        pedir para avaliá-la ou ver se combina com ele. Ela não busca nem salva nada.
+        - Precisa do título e da descrição. Se o usuário não disser o título (ou ele não aparecer
+        no print), pergunte antes.
+        - Se a vaga veio em imagem: leia o texto do print e passe o título e a descrição à
+        ferramenta copiados como estão na imagem, na mesma ordem, sem resumir, reorganizar nem
+        completar o que não dá para ler. Se o print estiver cortado ou ilegível (por exemplo, a
+        seção de requisitos começa e o texto termina), diga isso ao usuário antes da nota,
+        dizendo o que faltou, e avise que a nota é pouco confiável.
         - Mostre o resultado como em "Compatibilidade com o perfil do usuário": o campo
         `compatibilidade` tem os mesmos campos. Não calcule nem altere a nota.
         - Se vier `evidencias`, acrescente "No seu currículo, o mais próximo disso:" com o `texto`

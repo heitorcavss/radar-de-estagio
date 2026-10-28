@@ -182,7 +182,8 @@ Rascunho para virar a seção de decisões do README (fase 10).
   modelo e 1 de embedding.
 - **Patch, token e chunk:** o modelo divide a imagem em *patches* por dentro (o par do token do texto). Chunk, no projeto,
   é o texto que se escolhe indexar e que tem um embedding associado.
-- **O ponto fraco é a nota, não a leitura do print:** a `analisar_vaga` só recebe título e descrição, então não vê cidade
+- **O ponto fraco é a nota, não a leitura do print (os dois furos abaixo foram corrigidos no mesmo dia, ver "Refinos para o
+  final"):** a `analisar_vaga` só recebe título e descrição, então não via cidade
   nem modalidade (a QCA é em Recife, híbrida, e nada avisou), e o `nota.py` só enxerga as tecnologias de `TECNOLOGIAS`
   (Playwright, BeautifulSoup, Requests e RPA não contam, então "Lacunas: nenhuma" enganou; no LinkedIn, "modelos de
   linguagem" não virou LLMs e o inglês não entrou, e deu 100/100, provavelmente generoso).
@@ -199,10 +200,17 @@ Coisas que ficam para uma passada de refino, depois das fases principais:
 - [ ] **Chunks de uma palavra só** (`habilidades_parciais: Django`, `NLP`, `LLMs`): juntar em um chunk
   ("Habilidades em estudo: ...") se atrapalharem a busca.
 - [ ] **Tirar um teste de verdade do `curriculo_rag`:** os testes foram rodados no terminal e nenhum ficou no repo.
-- [ ] **A `analisar_vaga` ignora cidade e modalidade** (achado no print da QCA, em Recife, híbrida): avisar "presencial ou
-  híbrida fora de Goiânia" como o filtro da busca faz, por exemplo com um `atencao` a mais ou lendo a cidade do texto.
-- [ ] **A nota só vê as tecnologias da lista `TECNOLOGIAS`:** acrescentar as que apareceram nas vagas de teste (Playwright,
-  BeautifulSoup, Requests, RPA) e tratar "modelos de linguagem" como LLMs e "inglês para leitura" como requisito.
+- [x] **Aviso de cidade e modalidade na `analisar_vaga` (feito em 27/10/2026, `efc1df7`):** presencial ou híbrida fora de
+  Goiânia vira uma linha em "Atenção", sem mexer na nota. Limite: a cidade só é lida de uma linha com "Cidade - UF" (como nos
+  prints); em texto corrido ("vaga presencial em Recife") não pega e não avisa.
+- [x] **Mais tecnologias na nota (feito em 27/10/2026, `fb4ac15`):** Playwright, BeautifulSoup, RPA e "modelos de linguagem"
+  (conta como LLMs). Efeito: QCA 68 → 50 (as lacunas apareceram) e LinkedIn 100 → 90 (`llms` em "Em estudo"); as 6 vagas do
+  banco não mudaram.
+- [ ] **`Requests` ficou de fora:** é uma palavra comum ("HTTP request") e daria falso positivo. Talvez só "biblioteca requests".
+- [ ] **Inglês como requisito:** depende do **nível** pedido (o perfil tem intermediário; "para leitura" ele atende,
+  "avançado" não). Contar como "você já tem" sem ler o nível enganaria. Exige ler o nível no texto.
+- [ ] **Mais tecnologias que vão aparecer nas vagas** (ex.: Selenium, Scrapy, "web scraping"): a lista `TECNOLOGIAS` precisa
+  crescer com o que aparecer. Fazer isso junto do benchmark.
 - [ ] **Demonstração do servidor MCP com o Claude Desktop como host** (opcional).
 - [ ] **Benchmark (fase 10):** dar nota a 15-20 vagas e comparar com a do agente.
 

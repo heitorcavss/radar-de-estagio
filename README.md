@@ -70,7 +70,7 @@ flowchart TD
 Além da busca, o agente tem duas ferramentas avulsas:
 
 - **`listar_vagas_salvas`:** deixa perguntar "o que eu já vi de backend?" sem fazer uma busca nova (não gasta a cota da SerpApi).
-- **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Também mostra **os trechos do currículo mais parecidos com a vaga** (busca por significado, com embeddings do Gemini e ChromaDB): é um apoio para a candidatura e não muda a nota. Não busca vagas nem salva nada.
+- **`analisar_vaga`:** recebe o título e o texto de uma vaga colada na conversa, **ou um print dela** (o Gemini lê a imagem e avisa se o print vem cortado), e devolve a mesma análise (nota, o que você já tem, lacunas, atenção). Também mostra **os trechos do currículo mais parecidos com a vaga** (busca por significado, com embeddings do Gemini e ChromaDB): é um apoio para a candidatura e não muda a nota. Não busca vagas nem salva nada.
 
 ### Servidor MCP
 
@@ -175,6 +175,7 @@ O [NOTAS.md](NOTAS.md) registra o caminho do projeto: por que troquei de fonte d
 - [ ] Avaliar a nota contra as minhas próprias notas em 15 a 20 vagas
 - [x] Busca por significado no currículo (RAG): a `analisar_vaga` mostra os trechos mais próximos da vaga
 - [x] Servidor MCP: as ferramentas ficam em um servidor e o agente as usa por ele
+- [x] Avaliar uma vaga por print (imagem), com aviso quando o print vem cortado
 - [ ] Refinar a busca no currículo: procurar por requisito da vaga, e não pela descrição inteira (ao final do projeto)
 - [ ] Busca por significado (RAG) nas vagas salvas
 - [ ] Testes automatizados com `pytest`

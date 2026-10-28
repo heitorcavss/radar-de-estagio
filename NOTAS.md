@@ -166,6 +166,27 @@ Rascunho para virar a seção de decisões do README (fase 10).
   direto). O valor é outros hosts usarem o radar (ex.: Claude Desktop), vários agentes dividirem as tools (fase 9) e saber
   construir um servidor. Religar o agente foi escolha dele, para aprender o client do ADK.
 
+## Vaga por print (fase 8, 27/10/2026)
+
+- **Como funciona:** o Gemini lê a imagem sozinho (é multimodal), extrai o título e a descrição e o agente chama a
+  `analisar_vaga` que já existia, pelo servidor MCP. Nenhuma tool nova e o modelo não mudou. A mudança foi só uma regra na
+  `instruction` do `agent.py`: copiar o título e a descrição como estão no print, sem resumir nem reorganizar, e avisar
+  **antes da nota** quando o print vem cortado ou ilegível.
+- **Antes da regra:** o agente resumia e reorganizava o texto ("Responsabilidades" virou lista de posições, sumiram os
+  emojis) e não avisou que o print cortava antes dos requisitos (culpou só o fato de ser um banco de talentos genérico).
+- **Depois da regra, com o mesmo print:** texto copiado como está (com emojis e ordem) e aviso de print cortado antes da
+  nota, que não mudou (36).
+- **Testado com 3 prints, de 3 layouts:** banco de talentos da Invent (cortado nos requisitos), página da QCA (Recife,
+  híbrido, Python e RPA; avisou que "Sobre a gente" estava cortado) e LinkedIn pequeno (Estágio IA em Aparecida de
+  Goiânia; ignorou o ruído da tela e ficou com título, descrição, requisitos e benefícios). Cada um gastou 1 chamada do
+  modelo e 1 de embedding.
+- **Patch, token e chunk:** o modelo divide a imagem em *patches* por dentro (o par do token do texto). Chunk, no projeto,
+  é o texto que se escolhe indexar e que tem um embedding associado.
+- **O ponto fraco é a nota, não a leitura do print:** a `analisar_vaga` só recebe título e descrição, então não vê cidade
+  nem modalidade (a QCA é em Recife, híbrida, e nada avisou), e o `nota.py` só enxerga as tecnologias de `TECNOLOGIAS`
+  (Playwright, BeautifulSoup, Requests e RPA não contam, então "Lacunas: nenhuma" enganou; no LinkedIn, "modelos de
+  linguagem" não virou LLMs e o inglês não entrou, e deu 100/100, provavelmente generoso).
+
 ## Refinos para o final
 
 Coisas que ficam para uma passada de refino, depois das fases principais:
@@ -178,6 +199,10 @@ Coisas que ficam para uma passada de refino, depois das fases principais:
 - [ ] **Chunks de uma palavra só** (`habilidades_parciais: Django`, `NLP`, `LLMs`): juntar em um chunk
   ("Habilidades em estudo: ...") se atrapalharem a busca.
 - [ ] **Tirar um teste de verdade do `curriculo_rag`:** os testes foram rodados no terminal e nenhum ficou no repo.
+- [ ] **A `analisar_vaga` ignora cidade e modalidade** (achado no print da QCA, em Recife, híbrida): avisar "presencial ou
+  híbrida fora de Goiânia" como o filtro da busca faz, por exemplo com um `atencao` a mais ou lendo a cidade do texto.
+- [ ] **A nota só vê as tecnologias da lista `TECNOLOGIAS`:** acrescentar as que apareceram nas vagas de teste (Playwright,
+  BeautifulSoup, Requests, RPA) e tratar "modelos de linguagem" como LLMs e "inglês para leitura" como requisito.
 - [ ] **Demonstração do servidor MCP com o Claude Desktop como host** (opcional).
 - [ ] **Benchmark (fase 10):** dar nota a 15-20 vagas e comparar com a do agente.
 
@@ -286,7 +311,7 @@ termos de cibersegurança (com e sem acento) → vaga 17.
 | 5 | Nota de compatibilidade e lacunas | feita: nota em código e a tool `analisar_vaga` (com as evidências da fase 4) |
 | 6 | API FastAPI | **adiada** (25/10/2026): só se houver deploy ou interface própria. O uso é pessoal, pelo `adk web`, e o FastAPI já está em 2 projetos dele |
 | 7 | Servidor MCP | feita (25-26/10/2026): `mcp_server.py` e o agente ligado a ele; falta só a demonstração com o Claude Desktop (opcional) |
-| 8 | Vaga por print (multimodal) | não começou |
+| 8 | Vaga por print (multimodal) | feita (27/10/2026): sem tool nova, só a `instruction` do agente; limitações da nota anotadas nos refinos |
 | 9 | Multiagente | não começou |
 | 10 | Benchmark, README final, demo e deploy | README parte 1 feita; benchmark e o resto ficam para o fim |
 
@@ -322,8 +347,11 @@ Detalhes de cada fase, em ordem:
   Se um dia houver deploy, entra uma versão fina (2 ou 3 endpoints) em cima do que já existe.
 - **Fase 7: feita (25-26/10/2026).** Servidor MCP em `mcp_server.py` (`26c729e` dependência, `65a05ae` e `b7b3e8b` o
   servidor, `9d09d99` o agente ligado a ele). Decisões na seção "Servidor MCP (fase 7)".
-- **Próximo:** fase 8 (vaga por print). O benchmark (fase 10) e os refinos da seção "Refinos para o final" ficam para
-  o fim do projeto. As fases 8 e 9 ainda não estão descritas aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
+- **Fase 8: feita (27/10/2026).** Vaga por print: o `gemini-3.5-flash` já aceita imagem, então não precisou de tool nem de
+  trocar o modelo (`5f98e48`). Decisões e testes na seção "Vaga por print (fase 8)".
+- **Próximo:** fase 9 (multiagente) a decidir: ele já tem um projeto multiagente do bootcamp, então pode ficar de fora. O
+  benchmark (fase 10) e os refinos da seção "Refinos para o final" ficam para o fim do projeto. A fase 9 ainda não está
+  descrita aqui. Cidade "Não informada" em vagas remotas vem da SerpApi.
 
 ## Escolha da API (fase 2, 14-15/10/2026)
 

@@ -325,6 +325,36 @@ def listar_vagas_salvas(area: str | None = None, modalidade: str | None = None, 
 
     return {"numero_vagas": len(vagas), "vagas": vagas, "status": "success"}
 
+UFS = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ",
+       "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"}
+
+
+def _detectar_local(titulo: str, descricao: str) -> tuple[str | None, str | None]:
+    """Cidade e modalidade lidas do texto de uma vaga colada ou de um print. Na dúvida devolve None (como o filtro
+    da busca, que só barra com certeza). A cidade vem de uma linha só com "Cidade - UF" (ex.: "Recife - PE"); se o
+    texto cita Goiânia (ou Aparecida de Goiânia), é "Goiânia". "Remoto" vence "híbrido" e "presencial": se a vaga
+    aceita remoto, não há o que avisar."""
+    texto = _sem_acento(titulo + " " + descricao)
+
+    cidade = "Goiânia" if "goiania" in texto else None
+    if cidade is None:
+        for linha in descricao.splitlines():
+            m = re.fullmatch(r"\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ' ]{2,40}?)\s*[-–,]\s*([A-Z]{2})\s*", linha)
+            if m and m.group(2) in UFS:
+                cidade = m.group(1).strip()
+                break
+
+    if _tem_palavra("remoto", texto) or "home office" in texto:
+        modalidade = "remoto"
+    elif _tem_palavra("hibrido", texto):
+        modalidade = "híbrido"
+    elif _tem_palavra("presencial", texto):
+        modalidade = "presencial"
+    else:
+        modalidade = None
+    return cidade, modalidade
+
+
 def analisar_vaga(titulo: str, descricao: str) -> dict:
     """
     Analisa UMA vaga que o usuário colou na conversa e diz o quanto ela combina com o
@@ -357,8 +387,9 @@ def analisar_vaga(titulo: str, descricao: str) -> dict:
     if perfil["status"] != "success":
         return perfil
 
+    cidade, modalidade = _detectar_local(titulo, descricao)
     vaga = {"titulo": titulo, "descricao": descricao, "area": _detectar_area(titulo),
-            "linguagens": _detectar_linguagens(titulo + " " + descricao)}
+            "linguagens": _detectar_linguagens(titulo + " " + descricao), "cidade": cidade, "modalidade": modalidade}
     resultado = {"status": "success", "compatibilidade": calcular_nota(vaga, perfil["perfil"])}
 
     # se o gem ou o índice falharem, a nota sai do mesmo jeito

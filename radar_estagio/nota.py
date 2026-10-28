@@ -5,6 +5,7 @@ Limite: só enxerga as tecnologias que estão em TECNOLOGIAS (as linguagens vêm
 """
 import re
 
+from .filtro import CIDADES_BASE
 from .tools import _sem_acento, _tem_palavra
 
 PESO_TECNOLOGIAS = 70
@@ -92,6 +93,13 @@ def calcular_nota(vaga: dict, perfil: dict) -> dict:
         nota = min(nota, NOTA_MAX_ELIMINATORIA)
     if fora_do_objetivo:
         nota = min(nota, NOTA_MAX_FORA_DO_OBJETIVO)
+
+    # presencial ou híbrida fora de Goiânia: só avisa, não mexe na nota (a busca já filtra isso; aqui entram as vagas
+    # coladas ou em print). Só as que têm cidade e modalidade lidas do texto: na dúvida, não avisa.
+    cidade = vaga.get("cidade")
+    if vaga.get("modalidade") in ("presencial", "híbrido") and cidade and cidade not in CIDADES_BASE:
+        tipo = "híbrida" if vaga["modalidade"] == "híbrido" else "presencial"
+        atencao.append(f"vaga {tipo} em {cidade}, fora de Goiânia")
 
     return {"nota": int(nota + 0.5), "voce_ja_tem": tem, "em_estudo": em_estudo, "lacunas": lacunas,
             "atencao": atencao, "sem_requisitos_claros": sem_requisitos}

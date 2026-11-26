@@ -191,6 +191,25 @@
     .mensagem.usuario { align-self: flex-end; background: var(--azul); }
     .mensagem.agente  { align-self: flex-start; background: var(--cartao); border: 1px solid var(--borda); }
     .mensagem.aviso   { align-self: flex-start; padding: 0 4px; font-size: 12px; color: var(--texto-fraco); }
+
+    /* o texto do agente vira HTML (títulos, listas, links), então não precisa do pre-wrap */
+    .mensagem.agente { white-space: normal; }
+    .mensagem.agente > :first-child { margin-top: 0; }
+    .mensagem.agente > :last-child { margin-bottom: 0; }
+    .mensagem.agente p { margin: 0 0 10px; }
+    .mensagem.agente h3, .mensagem.agente h4 { margin: 16px 0 6px; line-height: 1.35; }
+    .mensagem.agente h3 { font-size: 16px; }
+    .mensagem.agente h4 { font-size: 15px; }
+    .mensagem.agente ul, .mensagem.agente ol { margin: 0 0 10px; padding-left: 20px; }
+    .mensagem.agente li { margin: 2px 0; }
+    .mensagem.agente hr { margin: 14px 0; border: none; border-top: 1px solid var(--borda-forte); }
+    .mensagem.agente a { color: #8db4ff; }
+    .mensagem.agente code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--fundo);
+      font-size: 13px;
+    }
     .mensagem.erro    { align-self: stretch; max-width: none; border: 1px solid var(--erro); color: var(--erro); }
 
     /* caixa de escrever */
@@ -331,12 +350,85 @@
     const botao = document.getElementById("enviar");
     const status = document.getElementById("status");
 
+    // ---------- Markdown -> HTML ----------
+    // O agente responde em Markdown (**negrito**, ### título, * item, [texto](link)).
+    // Este conversor cobre só o que ele usa. Regra de segurança: PRIMEIRO escapar o texto
+    // (trocar < > & " ' por códigos), DEPOIS criar as tags. Assim nada que vier no texto de uma
+    // vaga vira HTML de verdade; as únicas tags na tela são as que este código cria.
+    function escapar(texto) {
+      return texto
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    // O que vale dentro de uma linha: `código`, [texto](link) e **negrito**.
+    function formatarDentroDaLinha(linha) {
+      return linha
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        // só links http/https; outros tipos (como javascript:) ficam como texto
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    }
+
+    // O que vale para a linha inteira: título, separador, item de lista ou parágrafo.
+    function markdownParaHtml(markdown) {
+      const html = [];
+      let lista = null;      // "ul" (com marcador) ou "ol" (numerada) quando estamos dentro de uma
+      let paragrafo = [];    // linhas seguidas de texto comum, que viram um <p> só
+
+      function fecharParagrafo() {
+        if (paragrafo.length) html.push("<p>" + paragrafo.join("<br>") + "</p>");
+        paragrafo = [];
+      }
+      function fecharLista() {
+        if (lista) html.push(`</${lista}>`);
+        lista = null;
+      }
+      function item(tipo, conteudo) {
+        fecharParagrafo();
+        if (lista !== tipo) { fecharLista(); html.push(`<${tipo}>`); lista = tipo; }
+        html.push("<li>" + conteudo + "</li>");
+      }
+
+      for (const linhaOriginal of markdown.split("\n")) {
+        const linha = formatarDentroDaLinha(escapar(linhaOriginal.trimEnd()));
+        let partes;
+
+        if (linha.trim() === "") {                                   // linha vazia: fecha o bloco
+          fecharParagrafo(); fecharLista();
+        } else if ((partes = linha.match(/^(#{1,6})\s+(.*)$/))) {     // # título
+          fecharParagrafo(); fecharLista();
+          const tag = partes[1].length <= 2 ? "h3" : "h4";
+          html.push(`<${tag}>${partes[2]}</${tag}>`);
+        } else if (/^\s*(-{3,}|\*{3,})\s*$/.test(linha)) {           // --- separador
+          fecharParagrafo(); fecharLista();
+          html.push("<hr>");
+        } else if ((partes = linha.match(/^\s*[*-]\s+(.*)$/))) {      // * item ou - item
+          item("ul", partes[1]);
+        } else if ((partes = linha.match(/^\s*\d+[.)]\s+(.*)$/))) {   // 1. item
+          item("ol", partes[1]);
+        } else {                                                     // texto comum
+          fecharLista();
+          paragrafo.push(linha);
+        }
+      }
+      fecharParagrafo(); fecharLista();
+      return html.join("");
+    }
+
     // Põe uma mensagem na tela. `tipo` é a classe do CSS: usuario, agente, aviso ou erro.
     function mostrar(texto, tipo) {
       inicio.hidden = true;  // a conversa começou: some a tela inicial
       const div = document.createElement("div");
       div.className = "mensagem " + tipo;
-      div.textContent = texto;  // textContent (e não innerHTML) para o texto nunca virar HTML
+      if (tipo === "agente") {
+        div.innerHTML = markdownParaHtml(texto);  // seguro: o texto foi escapado antes de virar HTML
+      } else {
+        div.textContent = texto;  // o resto fica como texto puro
+      }
       mensagens.appendChild(div);
       conversa.scrollTop = conversa.scrollHeight;  // rola até o fim
       return div;
@@ -444,6 +536,8 @@
     document.querySelectorAll("[data-pergunta], [data-colar]").forEach((elemento) => {
       elemento.addEventListener("click", () => {
         if (elemento.dataset.pergunta) {
+          entrada.value = "";  // o que estava escrito na caixa não fica sobrando
+          ajustarAltura();
           enviar(elemento.dataset.pergunta);
         } else {
           entrada.value = elemento.dataset.colar;

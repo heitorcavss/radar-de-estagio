@@ -108,6 +108,7 @@ KvSBOT: Encontrei 4 vagas de dados. Da mais compatível para a menos:
 | Modelo | Gemini |
 | Fonte de vagas | Google Jobs via [SerpApi](https://serpapi.com/) |
 | Banco de dados | SQLite com [SQLAlchemy](https://www.sqlalchemy.org/) |
+| Tela própria | HTML, CSS e JavaScript puros, falando com o `adk api_server` |
 | Linguagem | Python 3 |
 
 ## 🚀 Como rodar
@@ -135,6 +136,19 @@ Depois, rode a interface do ADK na pasta do projeto e abra o endereço que apare
 adk web
 ```
 
+### Tela própria (opcional)
+
+Em vez do `adk web`, dá para conversar com o agente pela tela em `tela/index.html`: tema escuro, sugestões prontas, atalhos para as vagas salvas e o currículo, e as respostas formatadas. É uma página só, sem framework: ela fala direto com o servidor do ADK (`adk api_server`), que já oferece as rotas para criar a conversa e mandar as mensagens.
+
+Abra dois terminais na pasta do projeto, com o venv ativo:
+
+```bash
+adk api_server --allow_origins http://localhost:8080 .   # o agente, na porta 8000
+python -m http.server 8080 --directory tela              # a página, na porta 8080
+```
+
+E abra `http://localhost:8080`. O `--allow_origins` é necessário porque a página e o servidor estão em portas diferentes: sem ele, o navegador bloqueia as chamadas.
+
 Para usar com o seu currículo, edite `radar_estagio/perfil.json` com a sua formação, habilidades e projetos.
 
 > Cada pergunta sobre vagas gasta de 2 a 4 buscas da SerpApi. Ver as vagas já salvas não gasta nenhuma.
@@ -154,6 +168,7 @@ radar_estagio/
 ├── perfil.json      # perfil tirado do currículo
 ├── dados_falsos.py  # vagas falsas do começo do projeto (hoje sem uso)
 └── .env.example     # modelo das chaves de API
+tela/index.html      # tela própria de conversa com o agente (usa o adk api_server)
 docs/banner.svg      # banner deste README
 NOTAS.md             # diário de decisões, bugs encontrados e o que aprendi
 ```
@@ -176,6 +191,7 @@ O [NOTAS.md](NOTAS.md) registra o caminho do projeto: por que troquei de fonte d
 - [x] Busca por significado no currículo (RAG): a `analisar_vaga` mostra os trechos mais próximos da vaga
 - [x] Servidor MCP: as ferramentas ficam em um servidor e o agente as usa por ele
 - [x] Avaliar uma vaga por print (imagem), com aviso quando o print vem cortado
+- [x] Tela própria de conversa (HTML) ligada ao servidor do ADK
 - [ ] Refinar a busca no currículo: procurar por requisito da vaga, e não pela descrição inteira (ao final do projeto)
 - [ ] Busca por significado (RAG) nas vagas salvas
 - [ ] Testes automatizados com `pytest`

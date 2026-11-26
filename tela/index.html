@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radar de Estágio</title>
+  <style>
+    /* as cores ficam em variáveis para trocar o tema num lugar só */
+    :root {
+      --fundo: #0a1630;
+      --lateral: #0c1a38;
+      --cartao: #0f2147;
+      --cartao-hover: #142a58;
+      --borda: #1f3566;
+      --borda-forte: #2b4a8a;
+      --azul: #2563eb;
+      --azul-hover: #1d4fd0;
+      --texto: #e8eefb;
+      --texto-fraco: #8d9dbf;
+      --erro: #f87171;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;            /* barra lateral à esquerda, área principal à direita */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      background: var(--fundo);
+      color: var(--texto);
+    }
+
+    button { font: inherit; color: inherit; cursor: pointer; }
+    svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ---------- barra lateral ---------- */
+    aside {
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px 14px;
+      background: var(--lateral);
+      border-right: 1px solid var(--borda);
+    }
+
+    .marca {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 6px 12px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .marca .icone {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: var(--azul);
+    }
+
+    .botao-lateral {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: 1px solid var(--borda-forte);
+      background: transparent;
+      font-weight: 600;
+      text-align: left;
+    }
+    .botao-lateral:hover { background: var(--cartao-hover); }
+    .botao-lateral.primario { background: var(--azul); border-color: var(--azul); }
+    .botao-lateral.primario:hover { background: var(--azul-hover); }
+
+    .rotulo {
+      margin: 14px 6px 2px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--texto-fraco);
+    }
+
+    .atalho {
+      padding: 9px 10px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      text-align: left;
+    }
+    .atalho:hover { background: var(--cartao); }
+
+    .rodape {
+      margin-top: auto;   /* empurra o rodapé para o fim da barra */
+      padding: 12px 6px 0;
+      border-top: 1px solid var(--borda);
+      font-size: 12px;
+      color: var(--texto-fraco);
+    }
+    .status::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 6px;
+      border-radius: 50%;
+      background: var(--texto-fraco);
+    }
+    .status.ok::before { background: #34d399; }
+    .status.fora::before { background: var(--erro); }
+
+    /* ---------- área principal ---------- */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topo {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--borda);
+    }
+    .topo h1 { margin: 0; font-size: 14px; }
+    .topo p { margin: 2px 0 0; font-size: 12px; color: var(--texto-fraco); }
+
+    #conversa {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* tudo o que fica no meio da tela usa a mesma largura máxima */
+    .coluna { max-width: 760px; margin: 0 auto; }
+
+    /* tela inicial (some quando a conversa começa) */
+    #inicio {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 14vh;
+    }
+    #inicio[hidden] { display: none; }  /* sem isso o display: flex acima venceria o `hidden` */
+    #inicio .icone {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--azul);
+    }
+    #inicio .icone svg { width: 22px; height: 22px; }
+    #inicio h2 { margin: 18px 0 8px; font-size: 28px; }
+    #inicio > p { margin: 0 0 28px; max-width: 380px; line-height: 1.5; color: var(--texto-fraco); }
+
+    .sugestoes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 620px;
+    }
+    .sugestao {
+      padding: 14px;
+      border: 1px solid var(--borda-forte);
+      border-radius: 10px;
+      background: var(--cartao);
+      text-align: left;
+    }
+    .sugestao:hover { background: var(--cartao-hover); }
+    .sugestao strong { display: block; margin-bottom: 4px; }
+    .sugestao span { color: var(--texto-fraco); line-height: 1.4; }
+
+    /* mensagens */
+    #mensagens { display: flex; flex-direction: column; gap: 14px; }
+    .mensagem {
+      max-width: 85%;
+      padding: 11px 15px;
+      border-radius: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;   /* respeita as quebras de linha que o agente manda */
+      overflow-wrap: anywhere;
+    }
+    .mensagem.usuario { align-self: flex-end; background: var(--azul); }
+    .mensagem.agente  { align-self: flex-start; background: var(--cartao); border: 1px solid var(--borda); }
+    .mensagem.aviso   { align-self: flex-start; padding: 0 4px; font-size: 12px; color: var(--texto-fraco); }
+    .mensagem.erro    { align-self: stretch; max-width: none; border: 1px solid var(--erro); color: var(--erro); }
+
+    /* caixa de escrever */
+    .rodape-conversa { padding: 0 24px 14px; }
+    form {
+      padding: 12px 14px 10px;
+      border: 1px solid var(--borda-forte);
+      border-radius: 14px;
+      background: var(--cartao);
+    }
+    form:focus-within { border-color: var(--azul); }
+    textarea {
+      width: 100%;
+      max-height: 200px;
+      border: none;
+      outline: none;
+      resize: none;
+      background: transparent;
+      color: var(--texto);
+      font: inherit;
+      line-height: 1.5;
+    }
+    textarea::placeholder { color: var(--texto-fraco); }
+    .linha-do-form {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--texto-fraco);
+    }
+    #enviar {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: var(--azul);
+    }
+    #enviar:disabled { background: var(--borda-forte); cursor: default; }
+    .lembrete { margin: 8px 0 0; text-align: center; font-size: 11px; color: var(--texto-fraco); }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="marca">
+      <span class="icone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6-6"/></svg>
+      </span>
+      Radar de Estágio
+    </div>
+
+    <button class="botao-lateral primario" id="novo-chat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Nova conversa
+    </button>
+
+    <!-- cada atalho manda uma frase pronta para o agente; `data-pergunta` guarda essa frase -->
+    <div class="rotulo">ATALHOS</div>
+    <button class="atalho" data-pergunta="Quais vagas você já salvou?">Vagas salvas</button>
+    <button class="atalho" data-pergunta="Mostre o meu perfil: o que está no meu currículo?">Meu currículo</button>
+
+    <div class="rodape">
+      <span class="status" id="status">conectando…</span>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topo">
+      <h1>Buscador de estágios de TI</h1>
+      <p>Goiânia e remoto · nota comparada com o seu currículo</p>
+    </div>
+
+    <div id="conversa">
+      <div class="coluna">
+        <div id="inicio">
+          <span class="icone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          </span>
+          <h2>Qual vaga você procura?</h2>
+          <p>Peça uma busca, reveja as vagas já salvas ou cole uma vaga para ver se combina com você.</p>
+
+          <div class="sugestoes">
+            <button class="sugestao" data-pergunta="Tem estágio de Python remoto?">
+              <strong>Estágio de Python</strong>
+              <span>Busca vagas remotas ou em Goiânia que pedem Python</span>
+            </button>
+            <button class="sugestao" data-pergunta="Tem estágio de dados ou de IA?">
+              <strong>Dados e IA</strong>
+              <span>Busca estágios de dados, ciência de dados ou IA</span>
+            </button>
+            <button class="sugestao" data-pergunta="Quais vagas você já salvou?">
+              <strong>Vagas já vistas</strong>
+              <span>Lista as vagas salvas no banco, sem busca nova</span>
+            </button>
+            <button class="sugestao" data-colar="Avalie esta vaga:&#10;Título: &#10;Descrição: ">
+              <strong>Avaliar uma vaga</strong>
+              <span>Cole o título e a descrição e veja a nota e as lacunas</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="mensagens"></div>
+      </div>
+    </div>
+
+    <div class="rodape-conversa">
+      <div class="coluna">
+        <form id="formulario">
+          <textarea id="entrada" rows="1" placeholder="Ex.: tem estágio de backend com Python em Goiânia?"></textarea>
+          <div class="linha-do-form">
+            <span>Enter envia · Shift+Enter quebra a linha</span>
+            <button id="enviar" type="submit" title="Enviar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+            </button>
+          </div>
+        </form>
+        <p class="lembrete">O radar só busca e organiza. Confira os requisitos e a fonte da vaga antes de se candidatar.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Endereço do servidor do ADK (o `adk api_server`) e os nomes que ele espera.
+    const SERVIDOR = "http://localhost:8000";
+    const APP = "radar_estagio";   // o nome da pasta do agente
+    const USUARIO = "usuario";
+
+    let idDaSessao = null;  // o ADK guarda a conversa numa "sessão"
+    let ocupado = false;    // true enquanto o agente está respondendo
+
+    const conversa = document.getElementById("conversa");
+    const inicio = document.getElementById("inicio");
+    const mensagens = document.getElementById("mensagens");
+    const formulario = document.getElementById("formulario");
+    const entrada = document.getElementById("entrada");
+    const botao = document.getElementById("enviar");
+    const status = document.getElementById("status");
+
+    // Põe uma mensagem na tela. `tipo` é a classe do CSS: usuario, agente, aviso ou erro.
+    function mostrar(texto, tipo) {
+      inicio.hidden = true;  // a conversa começou: some a tela inicial
+      const div = document.createElement("div");
+      div.className = "mensagem " + tipo;
+      div.textContent = texto;  // textContent (e não innerHTML) para o texto nunca virar HTML
+      mensagens.appendChild(div);
+      conversa.scrollTop = conversa.scrollHeight;  // rola até o fim
+      return div;
+    }
+
+    // Pede ao ADK uma sessão nova. Não chama o Gemini.
+    async function criarSessao() {
+      status.className = "status";
+      status.textContent = "conectando…";
+      try {
+        const resposta = await fetch(`${SERVIDOR}/apps/${APP}/users/${USUARIO}/sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        if (!resposta.ok) throw new Error("o servidor respondeu " + resposta.status);
+        idDaSessao = (await resposta.json()).id;
+        status.className = "status ok";
+        status.textContent = "agente conectado";
+      } catch {
+        idDaSessao = null;
+        status.className = "status fora";
+        status.textContent = "servidor do ADK desligado";
+        mostrar("Não consegui falar com o servidor do ADK em " + SERVIDOR + ". Ele está rodando?", "erro");
+      }
+    }
+
+    // Manda a mensagem para o agente. O /run só responde quando o agente termina,
+    // com a lista de tudo o que aconteceu ("eventos"): chamadas de ferramenta e textos.
+    async function perguntar(texto) {
+      const resposta = await fetch(`${SERVIDOR}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appName: APP,
+          userId: USUARIO,
+          sessionId: idDaSessao,
+          newMessage: { role: "user", parts: [{ text: texto }] },
+        }),
+      });
+      if (!resposta.ok) throw new Error("o servidor respondeu " + resposta.status);
+      return await resposta.json();
+    }
+
+    // Percorre os eventos e mostra o que interessa: as ferramentas usadas e o texto do agente.
+    function mostrarEventos(eventos) {
+      for (const evento of eventos) {
+        for (const parte of evento.content?.parts ?? []) {
+          if (parte.functionCall) {
+            mostrar("usou " + parte.functionCall.name, "aviso");
+          } else if (parte.text && !parte.thought) {  // `thought` é o raciocínio interno do modelo
+            mostrar(parte.text, "agente");
+          }
+        }
+      }
+    }
+
+    async function enviar(texto) {
+      texto = texto.trim();
+      if (!texto || !idDaSessao || ocupado) return;
+
+      ocupado = true;
+      botao.disabled = true;
+      mostrar(texto, "usuario");
+      const pensando = mostrar("pensando…", "aviso");
+
+      try {
+        const eventos = await perguntar(texto);
+        pensando.remove();
+        mostrarEventos(eventos);
+      } catch (erro) {
+        pensando.remove();
+        mostrar("Deu erro ao falar com o agente: " + erro.message, "erro");
+      } finally {
+        ocupado = false;
+        botao.disabled = false;
+        entrada.focus();
+      }
+    }
+
+    // a caixa de texto cresce conforme você escreve (até o max-height do CSS)
+    function ajustarAltura() {
+      entrada.style.height = "auto";
+      entrada.style.height = entrada.scrollHeight + "px";
+    }
+
+    formulario.addEventListener("submit", (e) => {
+      e.preventDefault();  // sem isso o navegador recarrega a página ao enviar o formulário
+      const texto = entrada.value;
+      entrada.value = "";
+      ajustarAltura();
+      enviar(texto);
+    });
+
+    entrada.addEventListener("input", ajustarAltura);
+    entrada.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        formulario.requestSubmit();
+      }
+    });
+
+    // Sugestões e atalhos: `data-pergunta` envia na hora; `data-colar` só preenche a caixa
+    // (para a vaga, que você ainda precisa colar antes de enviar).
+    document.querySelectorAll("[data-pergunta], [data-colar]").forEach((elemento) => {
+      elemento.addEventListener("click", () => {
+        if (elemento.dataset.pergunta) {
+          enviar(elemento.dataset.pergunta);
+        } else {
+          entrada.value = elemento.dataset.colar;
+          ajustarAltura();
+          entrada.focus();
+        }
+      });
+    });
+
+    // Nova conversa: limpa a tela, volta a tela inicial e pede outra sessão ao ADK.
+    document.getElementById("novo-chat").addEventListener("click", () => {
+      if (ocupado) return;
+      mensagens.replaceChildren();
+      inicio.hidden = false;
+      criarSessao();
+    });
+
+    criarSessao();
+  </script>
+</body>
+</html>
